@@ -1,0 +1,96 @@
+Thunder Player web TEST — audio licences
+========================================
+
+All clips used in this test harness are genuinely lossless-origin field
+recordings (original WAV or FLAC). They were trimmed to 15–45 s excerpts,
+converted to stereo 44.1 kHz / 16-bit, given a short fade in/out, and
+peak-normalised (rumbles to about −4 dBFS, cracks to about −1 dBFS).
+No lossy source (MP3, AAC, OGG/Vorbis) was used or upconverted.
+
+The earlier thunder-player OGG bundle was not used.
+
+
+1. rumble_midwest.flac  — distant rumble
+   Title:    Light Rain Distant Thunder July 5th 2016
+   Author:   kvgarlic (Freesound)
+   Source:   https://commons.wikimedia.org/wiki/File:Light_Rain_Distant_Thunder_July_5th_2016.wav
+             also https://freesound.org/people/kvgarlic/sounds/349454/
+   Original: WAV, 48 kHz, 32-bit float, stereo, 1 min 50 s
+   Gear:     Marantz PMD661 and two Sennheiser ME66s, Illinois woods, 5 July 2016
+   Licence:  CC0 1.0 Universal (Public Domain Dedication)
+             https://creativecommons.org/publicdomain/zero/1.0/
+   Excerpt:  75.0 s–105.0 s (30 s)
+
+2. rumble_city.flac  — distant rumble
+   Title:    Distant storm in the city (5)
+   Author:   Matucha
+   Source:   https://commons.wikimedia.org/wiki/File:Distant_storm_in_the_city_(5).flac
+             also https://freesound.org/people/matucha/sounds/115250/
+   Original: FLAC, 44.1 kHz, 24-bit, stereo, 2 min 2 s
+   Gear:     Pair of Neumann KM76 through Manley Dual Mono Mic Pre and Lavry Blue AD
+   Licence:  Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+             https://creativecommons.org/licenses/by/3.0/
+   Excerpt:  90.0 s–120.0 s (30 s)
+   Credit:   "Distant storm in the city (5)" by Matucha, CC BY 3.0.
+             Trimmed and resampled for this test.
+
+3. crack_nosferatu.flac and crack_nosferatu.wav  — close crack
+   Title:    Nosferatu thunderclap
+   Author:   Richard Humphries
+   Source:   https://commons.wikimedia.org/wiki/File:Nosferatu_thunderclap_-_Richard_Humphries.wav
+             also https://freesound.org/people/RHumphries/sounds/2525/
+   Original: WAV, 48 kHz, 16-bit, stereo, 25 s (Pro Tools, dated 2005-06-08)
+   Licence:  Creative Commons Attribution 4.0 International (CC BY 4.0)
+             https://creativecommons.org/licenses/by/4.0/
+   Excerpt:  1.80 s–25.06 s (23.26 s)
+   Credit:   "Nosferatu thunderclap" by Richard Humphries, CC BY 4.0.
+             Trimmed and resampled for this test.
+   Note:     The WAV copy is the same excerpt, kept so the test page can
+             compare FLAC and WAV decode on the tablet.
+
+4. crack_hof.flac  — close / mid-range cracks
+   Title:    Gewittergeräusche in Hof 20250521 C1332Gewitter
+             (Thunderstorm noises in Hof, 21 May 2025)
+   Author:   PantheraLeo1359531
+   Source:   https://commons.wikimedia.org/wiki/File:Gewittergeräusche_in_Hof_20250521_C1332Gewitter.wav
+   Original: WAV, 48 kHz, 16-bit, stereo, 38 s
+   Licence:  Creative Commons Attribution 4.0 International (CC BY 4.0)
+             https://creativecommons.org/licenses/by/4.0/
+   Excerpt:  14.0 s–38.0 s (24 s)
+   Credit:   "Gewittergeräusche in Hof 20250521 C1332Gewitter" by
+             PantheraLeo1359531, CC BY 4.0. Trimmed and resampled for this test.
+
+5. crack_harlem.flac  — urban close-ish cracks
+   Title:    Harlem Thunder
+   Author:   Dia Dipasupil
+   Source:   https://archive.org/details/aporee_56651_64805
+             radio aporee: 260 W 135th St, New York, NY, USA
+   Original: WAV, 48 kHz, 24-bit, stereo, 60 s
+             (FLAC also published on the same item)
+   Licence:  Public Domain Mark 1.0
+             https://creativecommons.org/publicdomain/mark/1.0/
+   Excerpt:  10.5 s–40.5 s (30 s)
+
+6. crack_orage.flac  — close / mid-range crack with long tail
+   Title:    Orage du matin (morning thunderstorm)
+   Author:   Jean-François CAVRO
+   Source:   https://archive.org/details/aporee_72624_85622
+             radio aporee: Fraisses, Auvergne-Rhône-Alpes, France
+   Original: FLAC, 44.1 kHz, 24-bit, stereo, 16 min 20 s
+   Licence:  Public Domain Mark 1.0
+             https://creativecommons.org/publicdomain/mark/1.0/
+   Excerpt:  318.0 s–348.0 s (30 s)
+
+
+Not used (and why)
+------------------
+- Existing /workspace/thunder-player/thunder-sounds.zip OGG files: lossy origin.
+- BBC Sound Effects library: not freely licensed.
+- Freesound downloads that require a login: not used; two Freesound-origin
+  recordings above were taken from their Wikimedia Commons mirrors instead.
+- NPS / NOAA sound library clips checked: the readily available downloads
+  are MP3 (lossy origin), so they were skipped.
+- CC BY-SA Commons recordings (for example Thunder crack 2B.wav,
+  Very close thunder cracks.flac, the Groningen lightning WAVs) were
+  available as lossless files but were not used, because this test pack
+  is limited to public domain, CC0, or CC BY.

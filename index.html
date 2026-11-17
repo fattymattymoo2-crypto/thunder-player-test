@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b1220">
+<title>Thunder Player — TEST</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --card: #152036;
+    --ink: #f3f1ea;
+    --muted: #b7c0d0;
+    --accent: #f0c36a;
+    --good: #7dcea0;
+    --bad: #e07a7a;
+    --flash: #f7f4ff;
+    --approach: #7aa2d8;
+    --peak: #f0c36a;
+    --recession: #9b8fd4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%; }
+  body { min-height: 100dvh; padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); max-width: 720px; margin: 0 auto; }
+  .badge {
+    display: inline-block; letter-spacing: 0.12em; font-size: 11px; font-weight: 700;
+    background: #8b1e2d; color: #fff; padding: 4px 10px; border-radius: 999px;
+    vertical-align: middle;
+  }
+  h1 { font-size: 1.45rem; line-height: 1.25; margin: 12px 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 16px; font-size: 0.95rem; }
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin: 0 0 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  button {
+    appearance: none; border: 0; border-radius: 14px; font-size: 1.15rem; font-weight: 650;
+    padding: 16px 18px; min-height: 56px; flex: 1 1 140px; color: #0b1220; background: var(--accent);
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.ghost { background: #2a3b58; color: var(--ink); }
+  button.danger { background: #8b1e2d; color: #fff; }
+  button.go { background: #c9e4c9; }
+  label.slider { display: block; color: var(--muted); font-size: 0.95rem; margin: 8px 0 4px; }
+  input[type=range] { width: 100%; height: 36px; }
+  #phase {
+    font-size: 1.2rem; font-weight: 750; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 10px 12px; border-radius: 10px; background: #0b1220; color: var(--muted);
+    text-align: center;
+  }
+  #phase.approach { color: var(--approach); }
+  #phase.peak { color: var(--peak); background: #2a2414; }
+  #phase.recession { color: var(--recession); }
+  #phase.idle { color: var(--muted); }
+  .results { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .result { background: #0b1220; border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
+  .result strong { display: block; margin-bottom: 4px; }
+  .ok { color: var(--good); }
+  .fail { color: var(--bad); }
+  .pending { color: var(--muted); }
+  #log {
+    width: 100%; height: 220px; overflow: auto; background: #0b1220; color: #d5deec;
+    border-radius: 10px; padding: 10px 12px; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre-wrap; word-break: break-word; margin: 0;
+  }
+  .hint { color: var(--muted); font-size: 0.85rem; margin: 8px 0 0; }
+  #flash {
+    position: fixed; inset: 0; background: var(--flash); opacity: 0; pointer-events: none;
+    z-index: 80; transition: opacity 80ms linear;
+  }
+  #flash.on { opacity: 1; transition: none; }
+  #status { font-size: 0.9rem; color: var(--muted); margin: 0 0 10px; }
+  label.check { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.95rem; margin: 10px 0 0; }
+  label.check input { width: 22px; height: 22px; }
+</style>
+</head>
+<body>
+<div id="flash" aria-hidden="true"></div>
+<p><span class="badge">TEST BUILD</span></p>
+<h1>Thunder Player</h1>
+<p class="sub">Ryuboku aquarium storm engine — lossless stereo test for tablet browsers. Not the Pi 5.1 system.</p>
+
+<section class="card">
+  <p id="status">Audio is locked. Tap the button below first — iOS Safari will stay silent until you do.</p>
+  <div class="row">
+    <button id="btnUnlock" type="button">Tap to start audio</button>
+  </div>
+  <div class="results">
+    <div class="result"><strong>FLAC decode</strong><span id="flacStatus" class="pending">Not tested</span></div>
+    <div class="result"><strong>WAV decode</strong><span id="wavStatus" class="pending">Not tested</span></div>
+  </div>
+  <p class="hint">Test sound plays one FLAC clip, then one WAV clip, and reports whether the browser decoded each format.</p>
+  <div class="row" style="margin-top:12px">
+    <button id="btnTest" class="ghost" type="button" disabled>Test sound</button>
+  </div>
+</section>
+
+<section class="card">
+  <div id="phase" class="idle">Idle</div>
+  <label class="slider" for="dur">Storm length: <strong id="durLabel">3 minutes</strong></label>
+  <input id="dur" type="range" min="1" max="50" step="1" value="3">
+  <label class="check" for="accel"><input id="accel" type="checkbox"> Quick test: accelerate ×10 (a 30-minute storm plays in 3 minutes)</label>
+  <div class="row" style="margin-top:12px">
+    <button id="btnStorm" class="go" type="button" disabled>Test storm</button>
+    <button id="btnStop" class="danger" type="button" disabled>Stop</button>
+  </div>
+  <p class="hint">Approach (faint, dull, slow rumble) → peak (loud cracks with lightning) → recession (fading, duller). Random left-to-right or right-to-left drift. Stereo only. Storms of 8 minutes or more add a continuous rain bed that starts faint and far away, closes in over minutes, then recedes.</p>
+</section>
+
+<section class="card">
+  <strong>Log</strong>
+  <pre id="log">Waiting for “Tap to start audio”.</pre>
+</section>
+
+<script>
+(function () {
+  const CLIPS = [
+    { id: "rumble_midwest", src: "audio/rumble_midwest.flac", type: "rumble", title: "Distant rumble, Illinois woods" },
+    { id: "rumble_city",     src: "audio/rumble_city.flac",     type: "rumble", title: "Distant city storm" },
+    { id: "crack_nosferatu", src: "audio/crack_nosferatu.flac", type: "crack",  title: "Close thunderclap" },
+    { id: "crack_hof",       src: "audio/crack_hof.flac",       type: "crack",  title: "Thunderstorm, Hof" },
+    { id: "crack_harlem",    src: "audio/crack_harlem.flac",    type: "crack",  title: "Urban thunder, Harlem" },
+    { id: "crack_orage",     src: "audio/crack_orage.flac",     type: "crack",  title: "Morning storm, Fraisses" }
+  ];
+  const TEST_FLAC = { id: "test_flac", src: "audio/rumble_city.flac", title: "FLAC (distant city storm)" };
+  const TEST_WAV  = { id: "test_wav",  src: "audio/crack_nosferatu.wav", title: "WAV (close thunderclap)" };
+
+  const $ = (id) => document.getElementById(id);
+  const logEl = $("log");
+  const phaseEl = $("phase");
+  const flashEl = $("flash");
+  const statusEl = $("status");
+
+  let ctx = null;
+  let master = null;
+  let unlocked = false;
+  let buffers = {};       // id -> AudioBuffer
+  let decodeInfo = {};
+  let activeSources = [];
+  let stormTimer = null;
+  let stormRAF = null;
+  let storm = null;
+  let stormGen = 0;
+  let usingSynth = false;
+  let rainBed = null;      // continuous rain layer for long storms (>= 8 real minutes)
+
+  // Long-storm rain distance model
+  const LONG_STORM_SEC = 480;      // real storm length at/above which the rain bed is used
+  const RAIN_FAR_GAIN = 0.005;     // bed gain when the rain is furthest away (~ -46 dB)
+  const RAIN_FAR_CUTOFF = 250;     // Hz, muffled distant rain
+  const RAIN_NEAR_CUTOFF = 11000;  // Hz, rain right at the tank
+  const RAIN_FAR_PAN = 0.9;        // |pan| at arrival / exit
+  const RAIN_BED_LEVEL = 0.5;      // bed level at full intensity (cracks peak at 0.72-0.95)
+  const RAIN_NOISE_MIX = 0.3;      // synthesised rain noise blended under the recorded loop
+
+  function nowStamp() {
+    const d = new Date();
+    return d.toTimeString().slice(0, 8);
+  }
+  function log(msg) {
+    const line = "[" + nowStamp() + "] " + msg;
+    if (logEl.textContent === "Waiting for “Tap to start audio”.") logEl.textContent = line;
+    else logEl.textContent += "\n" + line;
+    logEl.scrollTop = logEl.scrollHeight;
+    console.log(line);
+  }
+  function setPhase(name, extra) {
+    phaseEl.className = name;
+    const labels = { idle: "Idle", approach: "Approach", peak: "Peak", recession: "Recession" };
+    phaseEl.textContent = (labels[name] || name) + (extra ? " · " + extra : "");
+  }
+  function setResult(el, ok, detail) {
+    el.className = ok ? "ok" : "fail";
+    el.textContent = (ok ? "OK — " : "FAILED — ") + detail;
+  }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function pick(list, lastId) {
+    const pool = list.filter((c) => c.id !== lastId);
+    const src = pool.length ? pool : list;
+    return src[Math.floor(Math.random() * src.length)];
+  }
+
+  function ensureContext() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) throw new Error("Web Audio API is not available in this browser");
+    if (!ctx) {
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.value = 0.9;
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -12;
+      comp.knee.value = 8;
+      comp.ratio.value = 3;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.25;
+      master.connect(comp);
+      comp.connect(ctx.destination);
+    }
+    return ctx;
+  }
+
+  async function unlockAudio() {
+    ensureContext();
+    if (ctx.state !== "running") await ctx.resume();
+    // iOS requires an audible-graph start() on a user gesture.
+    const silent = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const src = ctx.createBufferSource();
+    src.buffer = silent;
+    src.connect(ctx.destination);
+    src.start(0);
+    unlocked = true;
+    $("btnUnlock").disabled = true;
+    $("btnUnlock").textContent = "Audio unlocked";
+    $("btnTest").disabled = false;
+    $("btnStorm").disabled = false;
+    $("btnStop").disabled = false;
+    statusEl.textContent = "Audio context running at " + ctx.sampleRate + " Hz. Loading lossless clips…";
+    log("Audio context unlocked (" + ctx.state + ", " + ctx.sampleRate + " Hz).");
+    try { if (navigator.wakeLock && navigator.wakeLock.request) await navigator.wakeLock.request("screen"); } catch (e) {}
+    await preloadAll();
+  }
+
+  async function decodeUrl(url) {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status + " fetching " + url);
+    const mime = res.headers.get("content-type") || "unknown";
+    const ab = await res.arrayBuffer();
+    const bytes = ab.byteLength;
+    const buf = await new Promise((resolve, reject) => {
+      const p = ctx.decodeAudioData(ab.slice(0), resolve, reject);
+      if (p && typeof p.then === "function") p.then(resolve, reject);
+    });
+    return { buffer: buf, bytes: bytes, mime: mime };
+  }
+
+  async function preloadAll() {
+    let ok = 0, fail = 0;
+    for (const clip of CLIPS) {
+      try {
+        const r = await decodeUrl(clip.src);
+        buffers[clip.id] = r.buffer;
+        decodeInfo[clip.id] = r;
+        ok++;
+        log("Decoded " + clip.id + " (" + (r.bytes / 1024).toFixed(0) + " KiB, " +
+            r.buffer.numberOfChannels + " ch, " + r.buffer.sampleRate + " Hz, " +
+            r.buffer.duration.toFixed(2) + " s, MIME " + r.mime + ")");
+      } catch (err) {
+        fail++;
+        log("DECODE FAIL " + clip.id + ": " + (err && err.message ? err.message : err));
+      }
+    }
+    usingSynth = ok === 0;
+    if (usingSynth) {
+      statusEl.textContent = "No clips decoded. Storms will use a synthesised-noise fallback.";
+      log("All clip decodes failed — synthesised thunder fallback is armed.");
+    } else {
+      statusEl.textContent = ok + " lossless clip" + (ok === 1 ? "" : "s") + " ready" +
+        (fail ? " (" + fail + " failed)" : "") + ". Stereo only.";
+    }
+    // Dedicated format tests (do not rely on storm preload alone)
+    await testFormats(false);
+  }
+
+  async function testFormats(play) {
+    async function one(spec, el, label) {
+      try {
+        const r = await decodeUrl(spec.src);
+        setResult(el, true, r.mime + ", " + (r.bytes / 1024).toFixed(0) + " KiB, " +
+          r.buffer.numberOfChannels + " ch, " + Math.round(r.buffer.sampleRate) + " Hz, " +
+          r.buffer.duration.toFixed(1) + " s");
+        log(label + " decode succeeded (" + r.mime + ", " + (r.bytes / 1024).toFixed(0) + " KiB).");
+        return r.buffer;
+      } catch (err) {
+        const msg = err && err.message ? err.message : String(err);
+        setResult(el, false, msg);
+        log(label + " decode failed: " + msg);
+        return null;
+      }
+    }
+    const flacBuf = await one(TEST_FLAC, $("flacStatus"), "FLAC");
+    const wavBuf  = await one(TEST_WAV,  $("wavStatus"),  "WAV");
+    if (play) {
+      if (flacBuf) {
+        log("Playing FLAC test clip…");
+        playBuffer(flacBuf, { gain: 0.7, pan: 0, rate: 1, cutoff: 18000, when: ctx.currentTime });
+        await wait(flacBuf.duration + 0.4);
+      } else {
+        log("Skipping FLAC playback (decode failed).");
+      }
+      if (wavBuf) {
+        log("Playing WAV test clip…");
+        playBuffer(wavBuf, { gain: 0.85, pan: 0, rate: 1, cutoff: 18000, when: ctx.currentTime });
+      } else {
+        log("Skipping WAV playback (decode failed).");
+      }
+    }
+  }
+
+  function wait(sec) {
+    return new Promise((resolve) => setTimeout(resolve, sec * 1000));
+  }
+
+  function makeSynthBuffer(kind) {
+    const sr = ctx.sampleRate;
+    const dur = kind === "crack" ? 4.2 : 9.0;
+    const n = Math.floor(sr * dur);
+    const buf = ctx.createBuffer(2, n, sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      let lp = 0, lp2 = 0;
+      const spread = (Math.random() * 2 - 1) * 0.15;
+      for (let i = 0; i < n; i++) {
+        const t = i / sr;
+        const white = Math.random() * 2 - 1;
+        const crackEnv = kind === "crack"
+          ? Math.exp(-t * 9) * (t < 0.12 ? 1.2 : 0.45)
+          : Math.exp(-t * 3) * 0.25;
+        const rumbleEnv = kind === "crack"
+          ? (t > 0.05 ? Math.exp(-(t - 0.05) * 1.15) * 0.7 : 0)
+          : Math.exp(-t * 0.7) * 0.9;
+        lp += 0.012 * (white - lp);
+        lp2 += 0.004 * (lp - lp2);
+        const mid = white * 0.35 * crackEnv;
+        const low = (lp * 0.7 + lp2 * 1.4) * rumbleEnv;
+        d[i] = (mid + low) * (1 + (ch === 0 ? -spread : spread));
+      }
+    }
+    return buf;
+  }
+
+  function playBuffer(buffer, opts) {
+    const when = opts.when != null ? opts.when : ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = opts.rate || 1;
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = opts.cutoff || 18000;
+    filter.Q.value = 0.7;
+    const panner = ctx.createStereoPanner();
+    panner.pan.value = clamp(opts.pan || 0, -1, 1);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, when);
+    if ((opts.attack || 0) > 0.1) {
+      gain.gain.linearRampToValueAtTime(Math.max(0.0008, opts.gain || 0.7), when + opts.attack);
+    } else {
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0008, opts.gain || 0.7), when + 0.02);
+    }
+    src.connect(filter);
+    filter.connect(panner);
+    panner.connect(gain);
+    gain.connect(master);
+    src.start(when);
+    const rec = { src: src, gain: gain };
+    activeSources.push(rec);
+    src.onended = function () {
+      try { src.disconnect(); filter.disconnect(); panner.disconnect(); gain.disconnect(); } catch (e) {}
+      activeSources = activeSources.filter((s) => s !== rec);
+    };
+    return rec;
+  }
+
+  function stopAll() {
+    if (stormTimer) { clearTimeout(stormTimer); stormTimer = null; }
+    if (stormRAF) { cancelAnimationFrame(stormRAF); stormRAF = null; }
+    const t = ctx ? ctx.currentTime : 0;
+    activeSources.forEach((s) => {
+      try {
+        s.gain.gain.cancelScheduledValues(t);
+        s.gain.gain.setValueAtTime(s.gain.gain.value || 0.001, t);
+        s.gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+        s.src.stop(t + 0.22);
+      } catch (e) {}
+    });
+    activeSources = [];
+    stopRainBed(0.6);
+    storm = null;
+    setPhase("idle");
+    flashEl.classList.remove("on");
+  }
+
+  function lightning(intensity) {
+    flashEl.classList.add("on");
+    const hold = intensity > 0.7 ? 70 : 45;
+    setTimeout(function () {
+      flashEl.classList.remove("on");
+      if (intensity > 0.85 && Math.random() < 0.45) {
+        setTimeout(function () { flashEl.classList.add("on");
+          setTimeout(function () { flashEl.classList.remove("on"); }, 40);
+        }, 90);
+      }
+    }, hold);
+  }
+
+  // S-curve 0..1
+  function smooth(p) { p = clamp(p, 0, 1); return p * p * (3 - 2 * p); }
+
+  // Rain distance envelope for long storms. t = seconds into the (played) storm.
+  // s = nearness (0 = very far, 1 = right at the tank).
+  function rainEnvelope(t, st) {
+    const A = st.approachEnd, P = st.peakEnd, D = st.durationSec;
+    let s, side;
+    if (t <= 0) { s = 0; side = st.arriveSide; }
+    else if (t < A) { s = smooth(t / A); side = st.arriveSide; }
+    else if (t <= P) { s = 1; side = st.arriveSide; }
+    else if (t < D) { s = smooth(1 - (t - P) / (D - P)); side = st.exitSide; }
+    else { s = 0; side = st.exitSide; }
+    // Gain: exponential in s, i.e. a smooth S-curve in dB from -46 dB to 0 dB.
+    let gain = RAIN_FAR_GAIN * Math.pow(1 / RAIN_FAR_GAIN, s);
+    // Last 15% of the recession fades the faint far rain to true silence.
+    if (t > P) gain *= smooth((D - t) / ((D - P) * 0.15));
+    if (t >= D) gain = 0;
+    const cutoff = RAIN_FAR_CUTOFF * Math.pow(RAIN_NEAR_CUTOFF / RAIN_FAR_CUTOFF, s);
+    const pan = side * RAIN_FAR_PAN * (1 - s);
+    const rate = 0.9 + 0.1 * s;
+    return { s: s, distance: 1 - s, gain: gain, cutoff: cutoff, pan: pan, rate: rate };
+  }
+
+  // opts.realSec: real storm length (decides long-storm mode); opts.speed: timeline compression.
+  function planStorm(durationSec, opts) {
+    opts = opts || {};
+    const realSec = opts.realSec || durationSec;
+    const speed = opts.speed || 1;
+    const long = realSec >= LONG_STORM_SEC;
+    const direction = Math.random() < 0.5 ? "LtoR" : "RtoL";
+    const approachEnd = durationSec * 0.32;
+    const peakEnd = durationSec * 0.64;
+    const envPlan = { approachEnd: approachEnd, peakEnd: peakEnd, durationSec: durationSec,
+      arriveSide: direction === "LtoR" ? -1 : 1, exitSide: direction === "LtoR" ? 1 : -1 };
+    const mid = (approachEnd + peakEnd) / 2;
+    const rumbles = CLIPS.filter((c) => c.type === "rumble");
+    const cracks = CLIPS.filter((c) => c.type === "crack");
+    const events = [];
+    let t = rand(1.5, 4);
+    let lastId = null;
+    while (t < durationSec - 1.2) {
+      const phase = t < approachEnd ? "approach" : t < peakEnd ? "peak" : "recession";
+      const progress = t / durationSec;
+      let pan = direction === "LtoR" ? lerp(-0.85, 0.85, progress) : lerp(0.85, -0.85, progress);
+      const dist = clamp(Math.abs(t - mid) / (durationSec * 0.48), 0, 1);
+      const flashDelay = lerp(0.05, 4.2, dist * dist);
+      let clipMeta, rate, cutoff, gain, gap, intensity;
+      if (phase === "approach") {
+        clipMeta = pick(rumbles, lastId);
+        rate = rand(0.86, 0.93);
+        cutoff = rand(420, 780);
+        gain = lerp(0.09, 0.28, t / approachEnd);
+        gap = rand(8, 18);
+        intensity = 0.35;
+      } else if (phase === "peak") {
+        clipMeta = pick(cracks, lastId);
+        rate = rand(0.98, 1.03);
+        cutoff = rand(10000, 18000);
+        gain = rand(0.72, 0.95);
+        gap = rand(1.6, 5.0);
+        intensity = 1;
+      } else {
+        const useCrack = Math.random() < 0.35;
+        clipMeta = pick(useCrack ? cracks : rumbles, lastId);
+        const recProg = (t - peakEnd) / Math.max(1, durationSec - peakEnd);
+        rate = rand(0.84, 0.92);
+        cutoff = rand(480, 900);
+        gain = lerp(0.32, 0.08, recProg) * (useCrack ? 1.05 : 0.85);
+        gap = rand(7, 16);
+        intensity = lerp(0.55, 0.2, recProg);
+      }
+      let attack = phase === "peak" ? 0.02 : rand(2, 8);
+      if (long && phase !== "peak") {
+        // Long storms: clips follow the rain bed's distance so nothing pops in loud early.
+        const env = rainEnvelope(t, envPlan);
+        gain = gain * Math.pow(env.gain, 0.6);
+        cutoff = clamp(env.cutoff * rand(0.8, 1.25), 200, 12000);
+        rate = rate + (1 - rate) * env.s;
+        pan = clamp(env.pan + rand(-0.12, 0.12), -1, 1);
+        intensity = intensity * lerp(0.4, 1, env.s);
+        attack = Math.max(0.6, rand(6, 20) / speed);
+      }
+      events.push({
+        t: t, phase: phase, clip: clipMeta, rate: rate, cutoff: cutoff,
+        gain: gain, pan: pan, flashDelay: flashDelay, intensity: intensity,
+        // Rain onset: rain-and-rumble clips swell in gradually (2-8 s, double the earlier 1-4 s); close cracks stay sharp.
+        // Long storms (>= 8 real min) use 6-20 s (divided by the quick-test speed-up).
+        attack: attack
+      });
+      lastId = clipMeta.id;
+      t += gap;
+    }
+    return { direction: direction, events: events, approachEnd: approachEnd, peakEnd: peakEnd, durationSec: durationSec,
+      arriveSide: envPlan.arriveSide, exitSide: envPlan.exitSide, long: long, realSec: realSec, speed: speed };
+  }
+
+  // ---------- Continuous rain bed (long storms only) ----------
+  function makeRainNoise() {
+    // 17 s stereo pink-ish noise with sparse droplet ticks; loops under the recordings.
+    const sr = ctx.sampleRate, dur = 17, n = Math.floor(sr * dur);
+    const buf = ctx.createBuffer(2, n, sr);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, drop = 0, hp = 0, prev = 0;
+      for (let i = 0; i < n; i++) {
+        const w = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759;
+        b2 = 0.96900 * b2 + w * 0.1538520; b3 = 0.86650 * b3 + w * 0.3104856;
+        b4 = 0.55000 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.0168980;
+        const pink = (b0 + b1 + b2 + b3 + b4 + b5 + w * 0.5362) * 0.11;
+        if (Math.random() < 120 / sr) drop = rand(0.2, 0.6);
+        drop *= 0.995;
+        hp = 0.97 * (hp + w - prev); prev = w;
+        d[i] = pink * 0.8 + hp * drop * 0.5;
+      }
+      // short crossfade of the end into the start so the loop point has no click
+      const xf = Math.floor(sr * 0.25);
+      for (let i = 0; i < xf; i++) {
+        const a = i / xf;
+        d[i] = d[i] * a + d[n - xf + i] * (1 - a);
+      }
+    }
+    return buf;
+  }
+
+  function curveFor(st, fromT, toT, key) {
+    const len = Math.max(2, Math.ceil(toT - fromT) + 1);   // ~1 s resolution
+    const arr = new Float32Array(len);
+    for (let i = 0; i < len; i++) {
+      const t = fromT + (toT - fromT) * (i / (len - 1));
+      arr[i] = rainEnvelope(t, st)[key];
+    }
+    return arr;
+  }
+
+  function startRainBed(st, t0) {
+    stopRainBed(0.05);
+    const D = st.durationSec, A = st.approachEnd, P = st.peakEnd;
+    const bus = ctx.createGain();
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.Q.value = 0.5;
+    const pan = ctx.createStereoPanner();
+    const env = ctx.createGain();
+    const out = ctx.createGain();
+    out.gain.value = RAIN_BED_LEVEL;
+    bus.connect(lp); lp.connect(pan); pan.connect(env); env.connect(out); out.connect(master);
+    const e0 = rainEnvelope(0, st);
+    env.gain.value = e0.gain; lp.frequency.value = e0.cutoff; pan.pan.value = e0.pan;
+    const s0 = t0 + 0.05;
+    // Approach: far -> near over the whole approach phase (minutes for real long storms)
+    env.gain.setValueCurveAtTime(curveFor(st, 0.05, A, "gain"), s0, A - 0.05);
+    lp.frequency.setValueCurveAtTime(curveFor(st, 0.05, A, "cutoff"), s0, A - 0.05);
+    pan.pan.setValueCurveAtTime(curveFor(st, 0.05, A, "pan"), s0, A - 0.05);
+    // Peak: holds the last approach value (full, open, centred). Recession: reverse to silence.
+    env.gain.setValueCurveAtTime(curveFor(st, P, D, "gain"), t0 + P, D - P);
+    lp.frequency.setValueCurveAtTime(curveFor(st, P, D, "cutoff"), t0 + P, D - P);
+    pan.pan.setValueCurveAtTime(curveFor(st, P, D, "pan"), t0 + P, D - P);
+    env.gain.setValueAtTime(0, t0 + D + 0.05);
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = makeRainNoise();
+    noise.loop = true;
+    const noiseGain = ctx.createGain();
+    const recorded = CLIPS.filter((c) => c.type === "rumble" && buffers[c.id]).map((c) => buffers[c.id]);
+    noiseGain.gain.value = recorded.length ? RAIN_NOISE_MIX : 1;
+    noise.connect(noiseGain); noiseGain.connect(bus);
+    noise.start(s0);
+    noise.stop(t0 + D + 0.5);
+
+    const bed = { t0: t0, st: st, bus: bus, lp: lp, pan: pan, env: env, out: out, noise: noise,
+      sources: [noise], recorded: recorded, nextAt: s0, lastBucket: -1, timer: null };
+    // Recorded rain: random clip + random offset segments, equal-power crossfaded.
+    const fadeIn = new Float32Array(16), fadeOut = new Float32Array(16);
+    for (let i = 0; i < 16; i++) {
+      fadeIn[i] = Math.sin((i / 15) * Math.PI / 2);
+      fadeOut[i] = Math.cos((i / 15) * Math.PI / 2);
+    }
+    function scheduleUntil(until) {
+      if (!recorded.length) return;
+      const endAt = t0 + D + 0.5;
+      while (bed.nextAt < until && bed.nextAt < endAt) {
+        const buf = recorded[Math.floor(Math.random() * recorded.length)];
+        const segLen = Math.min(rand(9, 15), Math.max(2, buf.duration - 0.5));
+        const offset = rand(0, Math.max(0, buf.duration - segLen - 0.1));
+        const rate = rainEnvelope(bed.nextAt - t0, st).rate;
+        const wall = segLen / rate;
+        const xf = Math.min(4, wall / 3);
+        const at = Math.max(bed.nextAt, ctx.currentTime + 0.02);
+        const src = ctx.createBufferSource();
+        src.buffer = buf; src.playbackRate.value = rate;
+        const g = ctx.createGain();
+        g.gain.value = 0;
+        g.gain.setValueCurveAtTime(fadeIn, at, xf);
+        g.gain.setValueCurveAtTime(fadeOut, at + wall - xf, xf);
+        src.connect(g); g.connect(bus);
+        src.start(at, offset, segLen);
+        src.stop(at + wall + 0.05);
+        bed.sources.push(src);
+        src.onended = function () {
+          try { src.disconnect(); g.disconnect(); } catch (e) {}
+          bed.sources = bed.sources.filter((x) => x !== src);
+        };
+        bed.nextAt = at + wall - xf;
+      }
+    }
+    scheduleUntil(ctx.currentTime + 25);
+    bed.timer = setInterval(function () {
+      if (rainBed !== bed) return;
+      scheduleUntil(ctx.currentTime + 25);
+      const el = ctx.currentTime - t0;
+      const ev = rainEnvelope(el, st);
+      const pct = Math.round(ev.distance * 100);
+      const bucket = Math.round(pct / 5);
+      if (bucket !== bed.lastBucket && el < D) {
+        bed.lastBucket = bucket;
+        log("Rain distance " + pct + "% → " + (pct >= 67 ? "far" : pct >= 34 ? "closing" : pct > 0 ? "near" : "at the tank") +
+            "  (gain " + (20 * Math.log10(Math.max(ev.gain, 1e-6))).toFixed(1) + " dB, lp " + Math.round(ev.cutoff) +
+            " Hz, pan " + ev.pan.toFixed(2) + ")");
+      }
+      if (el > D + 1) stopRainBed(0.05);
+    }, 2000);
+    rainBed = bed;
+    log("Rain bed on — starts " + Math.round(e0.distance * 100) + "% away (" +
+        (20 * Math.log10(e0.gain)).toFixed(0) + " dB, lp " + Math.round(e0.cutoff) + " Hz, pan " + e0.pan.toFixed(2) +
+        "), reaches the tank at " + fmtTime(A) + ", recedes from " + fmtTime(P) + "." +
+        (recorded.length ? "" : " (synthesised rain only)"));
+    return bed;
+  }
+
+  function stopRainBed(fadeSec) {
+    const bed = rainBed;
+    if (!bed) return;
+    rainBed = null;
+    if (bed.timer) clearInterval(bed.timer);
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    try {
+      bed.out.gain.cancelScheduledValues(t);
+      bed.out.gain.setValueAtTime(bed.out.gain.value, t);
+      bed.out.gain.linearRampToValueAtTime(0, t + fadeSec);
+    } catch (e) {}
+    bed.sources.forEach(function (src) { try { src.stop(t + fadeSec + 0.05); } catch (e) {} });
+    setTimeout(function () {
+      try { bed.out.disconnect(); } catch (e) {}
+    }, (fadeSec + 0.3) * 1000);
+  }
+
+  function fmtTime(sec) {
+    const m = Math.floor(sec / 60), s = Math.round(sec % 60);
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function bufferFor(clip) {
+    if (clip && buffers[clip.id]) return buffers[clip.id];
+    return makeSynthBuffer(clip && clip.type === "crack" ? "crack" : "rumble");
+  }
+
+  function startStorm() {
+    if (!unlocked) return;
+    stopAll();
+    const minutes = parseInt($("dur").value, 10);
+    const speed = $("accel").checked ? 10 : 1;
+    const realSec = minutes * 60;
+    storm = planStorm(realSec / speed, { realSec: realSec, speed: speed });
+    const t0 = ctx.currentTime;
+    storm.t0 = t0;
+    const gen = ++stormGen;
+    storm.gen = gen;
+    if (speed !== 1) log("Quick test ×" + speed + ": real storm " + fmtTime(realSec) + " compressed to " + fmtTime(storm.durationSec) + ".");
+    if (storm.long) startRainBed(storm, t0);
+    log("Storm start — " + minutes + " min" + (speed !== 1 ? " (playing in " + fmtTime(storm.durationSec) + ")" : "") + ", drift " +
+        (storm.direction === "LtoR" ? "left → right" : "right → left") +
+        ", " + storm.events.length + " events" +
+        (usingSynth ? " (synthesised fallback)" : "") + ".");
+    storm.events.forEach(function (ev) {
+      const flashAt = t0 + ev.t;
+      const audioAt = t0 + ev.t + ev.flashDelay;
+      const delayMs = Math.max(0, ev.t * 1000);
+      const thunderMs = Math.max(0, (ev.t + ev.flashDelay) * 1000);
+      setTimeout(function () {
+        if (!storm || storm.gen !== gen) return;
+        lightning(ev.intensity);
+        log(ev.phase.toUpperCase() + "  flash  then thunder in " + ev.flashDelay.toFixed(2) +
+            "s  " + ev.clip.id + "  pan " + ev.pan.toFixed(2) +
+            "  gain " + ev.gain.toFixed(ev.gain < 0.1 ? 3 : 2) + "  rate " + ev.rate.toFixed(2) +
+            "  lp " + Math.round(ev.cutoff) + " Hz");
+      }, delayMs);
+      setTimeout(function () {
+        if (!storm || storm.gen !== gen) return;
+        const buf = bufferFor(ev.clip);
+        const synthNote = (!ev.clip || !buffers[ev.clip.id]) ? " [synth]" : "";
+        playBuffer(buf, { gain: ev.gain, pan: ev.pan, rate: ev.rate, cutoff: ev.cutoff, attack: ev.attack, when: ctx.currentTime });
+        if (synthNote) log("  used synthesised fallback for " + (ev.clip && ev.clip.id));
+      }, thunderMs);
+    });
+    const endMs = storm.durationSec * 1000 + 8000; // allow tails
+    stormTimer = setTimeout(function () {
+      if (!storm || storm.gen !== gen) return;
+      log("Storm ended.");
+      stopRainBed(0.5);
+      storm = null;
+      setPhase("idle");
+      stormRAF = null;
+    }, endMs);
+    function tick() {
+      if (!storm || storm.gen !== gen) return;
+      const elapsed = ctx.currentTime - storm.t0;
+      let extra = "";
+      if (storm.long && elapsed < storm.durationSec) {
+        extra = "rain " + Math.round(rainEnvelope(elapsed, storm).distance * 100) + "% away";
+      }
+      if (elapsed < storm.approachEnd) setPhase("approach", extra);
+      else if (elapsed < storm.peakEnd) setPhase("peak", extra);
+      else if (elapsed < storm.durationSec) setPhase("recession", extra);
+      else setPhase("idle");
+      stormRAF = requestAnimationFrame(tick);
+    }
+    tick();
+  }
+
+  $("dur").addEventListener("input", function () {
+    const v = parseInt(this.value, 10);
+    const accel = $("accel").checked;
+    $("durLabel").textContent = v + (v === 1 ? " minute" : " minutes") +
+      (accel ? " (plays in " + fmtTime(v * 6) + ")" : "") + (v >= 8 ? " · long rain build" : "");
+  });
+  $("accel").addEventListener("change", function () {
+    $("dur").dispatchEvent(new Event("input"));
+  });
+  $("btnUnlock").addEventListener("click", function () {
+    unlockAudio().catch(function (err) {
+      log("Unlock failed: " + (err && err.message ? err.message : err));
+      statusEl.textContent = "Could not start audio. Try tapping again, or check the silent switch.";
+    });
+  });
+  $("btnTest").addEventListener("click", function () {
+    if (!unlocked) return;
+    log("Test sound — FLAC then WAV.");
+    testFormats(true).catch(function (err) {
+      log("Test sound error: " + (err && err.message ? err.message : err));
+    });
+  });
+  $("btnStorm").addEventListener("click", startStorm);
+  $("btnStop").addEventListener("click", function () {
+    stopAll();
+    log("Stopped.");
+  });
+})();
+</script>
+</body>
+</html>
