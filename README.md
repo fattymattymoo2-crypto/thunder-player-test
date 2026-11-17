@@ -1,8 +1,5 @@
 # Thunder Player — browser TEST build
 
-Live test page (GitHub Pages): https://fattymattymoo2-crypto.github.io/thunder-player-test/
-
-
 Minimal tablet test harness for the Ryuboku aquarium storm engine.
 Open `index.html` via the local server (not as a `file://` URL — browsers
 block audio fetches that way).
@@ -48,3 +45,13 @@ Limitations: the public tunnel URL is temporary; output is stereo only
 - Stop fades the bed out over 0.6 s. The phase label shows "rain N% away"
   and the log reports rain distance every ~5% step.
 - Backup of the previous page: `index.backup-before-long-rain.html`.
+
+## Crack clip swap (17 Nov 2026)
+
+- `crack_hof.flac` was removed: its first ~10 s is steady rain/wind noise
+  (spectrally flat, centroid ~2.5 kHz, ~−21 dBFS) and the actual thunder only
+  arrives ~10.5 s in, so peak-phase lightning strikes produced a hiss.
+- Replaced by `crack_thunder4.flac` — BigSoundBank "Thunder #4" (CC0), a dry
+  close thunderclap with no rain, trimmed so it hits immediately.
+- Backups of the previous page/licences and the old clip:
+  `backups/2026-11-17-before-crack-swap/` (workspace only, not deployed).

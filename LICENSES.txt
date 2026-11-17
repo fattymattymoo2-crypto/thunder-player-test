@@ -48,17 +48,27 @@ The earlier thunder-player OGG bundle was not used.
    Note:     The WAV copy is the same excerpt, kept so the test page can
              compare FLAC and WAV decode on the tablet.
 
-4. crack_hof.flac  — close / mid-range cracks
-   Title:    Gewittergeräusche in Hof 20250521 C1332Gewitter
-             (Thunderstorm noises in Hof, 21 May 2025)
-   Author:   PantheraLeo1359531
-   Source:   https://commons.wikimedia.org/wiki/File:Gewittergeräusche_in_Hof_20250521_C1332Gewitter.wav
-   Original: WAV, 48 kHz, 16-bit, stereo, 38 s
-   Licence:  Creative Commons Attribution 4.0 International (CC BY 4.0)
-             https://creativecommons.org/licenses/by/4.0/
-   Excerpt:  14.0 s–38.0 s (24 s)
-   Credit:   "Gewittergeräusche in Hof 20250521 C1332Gewitter" by
-             PantheraLeo1359531, CC BY 4.0. Trimmed and resampled for this test.
+4. crack_thunder4.flac  — close, dry thunderclap (no rain)   [replaced 17 Nov 2026]
+   Title:    Thunder #4 ("A single thunderclap, without rain.")
+   Author:   Joseph SARDIN & Axeline T. (BigSoundBank / LaSonotheque), sound no. 3115
+   Source:   https://bigsoundbank.com/thunder-4-s3115.html
+             lossless file: https://bigsoundbank.com/UPLOAD/flac/3115.flac
+   Original: FLAC, 48 kHz, 24-bit, mono, 17.2 s
+   Gear:     Sound Devices MixPre-3 + Sennheiser ME66, outdoors
+   Licence:  CC0 1.0 (public-domain equivalent; attribution not required,
+             given here anyway) https://creativecommons.org/publicdomain/zero/1.0/
+   Excerpt:  1.02 s–end (16.2 s): leading silence/quiet pre-roll trimmed so the
+             clap starts at once; 5 ms fade-in, 1 s fade-out, resampled to
+             44.1 kHz (soxr), dual-mono stereo, 16-bit, peak-normalised to −1 dBFS.
+             The untouched original is kept outside the site in
+             source/bigsoundbank_3115_thunder4_original.flac.
+
+   Replaced: crack_hof.flac ("Gewittergeräusche in Hof 20250521 C1332Gewitter",
+             PantheraLeo1359531, CC BY 4.0,
+             https://commons.wikimedia.org/wiki/File:Gewittergeräusche_in_Hof_20250521_C1332Gewitter.wav).
+             Its first ~10 s were steady broadband rain/wind noise at about
+             −21 dBFS with the thunder only arriving ~10.5 s in, so on a
+             lightning strike it played as a hiss. Removed from the site.
 
 5. crack_harlem.flac  — urban close-ish cracks
    Title:    Harlem Thunder
