@@ -28,9 +28,11 @@ Limitations: the public tunnel URL is temporary; output is stereo only
   accelerate ×10** checkbox compresses the timeline 10× (a 30-minute storm
   plays in 3:00); the log shows real vs compressed length.
 - Storms of **8 minutes or more** (real length) add a continuous **rain bed**
-  for the whole storm: random-offset segments of the two rumble/rain FLACs
-  (9–15 s, equal-power 4 s crossfades) plus a looped synthesised pink-noise
-  rain layer (30% mix), through its own lowpass → stereo panner → gain.
+  for the whole storm: a seamless 32 s loop of a recorded rain-on-leaves
+  FLAC (`audio/rain_bed.flac`), through its own lowpass → stereo panner →
+  gain. The earlier synthesised pink-noise layer (30% mix) and the rumble-
+  chunk bed have been removed, because the noise sounded like hiss/static
+  through speakers.
   - Approach (first 32%): gain −46 dB (0.005) → 0 dB on an S-curve in dB,
     lowpass 250 Hz → 11 kHz (log scale), pan ±0.9 on the arrival side → centre,
     playback rate 0.90 → 1.00. Automated with 1 s-resolution value curves.
@@ -55,3 +57,14 @@ Limitations: the public tunnel URL is temporary; output is stereo only
   close thunderclap with no rain, trimmed so it hits immediately.
 - Backups of the previous page/licences and the old clip:
   `backups/2026-11-17-before-crack-swap/` (workspace only, not deployed).
+
+## Rain bed swap (18 Nov 2026)
+
+- The long-storm rain bed no longer uses synthesised noise or sliced rumble
+  clips. It loops `audio/rain_bed.flac`, a Public Domain recording of rain
+  on leaves (raphael.malfliet, radio aporee / Internet Archive).
+- The distant-approach envelope is unchanged: gain −46 dB → 0 dB on an
+  S-curve, lowpass 250 Hz → 11 kHz, pan ±0.9 → centre, playback rate
+  0.90 → 1.00; short storms still swell rain/rumble clips over 2–8 s.
+- Backup of the previous page, licences and README:
+  `backups/2026-11-18-before-rain-swap/` (workspace only, not deployed).

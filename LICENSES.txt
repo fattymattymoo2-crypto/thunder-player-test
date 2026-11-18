@@ -92,6 +92,33 @@ The earlier thunder-player OGG bundle was not used.
    Excerpt:  318.0 s–348.0 s (30 s)
 
 
+
+7. rain_bed.flac  — continuous rain bed (long storms only)   [added 18 Nov 2026]
+   Title:    Light to heavy rain on leaves and mountain
+             (Tracce Di Luce, Castelnuovo al Volturno)
+   Author:   raphael.malfliet
+   Source:   https://archive.org/details/aporee_65214_75311
+             radio aporee: Via Portella, Castelnuovo al Volturno, Italy
+   Original: WAV, 48 kHz, 24-bit, stereo, 11 min 39 s
+   Gear:     Two LOM omni microphones
+   Licence:  Public Domain Mark 1.0
+             https://creativecommons.org/publicdomain/mark/1.0/
+   Excerpt:  282.0 s–316.0 s (34.0 s): a steady medium stretch of rain on
+             leaves and bushes, with no thunder. 2 s equal-power crossfade
+             of the end into the start, yielding a 32.0 s seamless loop;
+             resampled to 44.1 kHz (soxr), 16-bit, peak-normalised to −4 dBFS.
+             The unprocessed 34 s excerpt (48 kHz, 24-bit FLAC) is kept
+             outside the site in source/aporee_65214_rain_on_leaves_excerpt_48k24.flac.
+
+   Replaced: the long-storm rain bed was previously made from random
+             9–15 s segments of rumble_midwest.flac and rumble_city.flac
+             (crossfaded) plus a looped synthesised pink-noise / droplet-tick
+             layer at 30% mix (RAIN_NOISE_MIX). The noise layer was spectrally
+             flat (Wiener flatness ≈ 0.40, ~23% of energy above 8 kHz) and
+             sounded like hiss/static through speakers. That synth layer and
+             the rumble-chunk bed have been removed. Rumble clips are still
+             used as approach/recession thunder events.
+
 Not used (and why)
 ------------------
 - Existing /workspace/thunder-player/thunder-sounds.zip OGG files: lossy origin.
