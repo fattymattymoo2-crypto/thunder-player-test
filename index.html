@@ -74,6 +74,12 @@
   #status { font-size: 0.9rem; color: var(--muted); margin: 0 0 10px; }
   label.check { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.95rem; margin: 10px 0 0; }
   label.check input { width: 22px; height: 22px; }
+  #locale {
+    font-size: 0.95rem; color: var(--muted); text-align: center;
+    margin-top: 8px; padding: 8px 10px; border-radius: 10px;
+    background: #0b1220;
+  }
+  #locale.live { color: var(--ink); }
 </style>
 </head>
 <body>
@@ -99,6 +105,7 @@
 
 <section class="card">
   <div id="phase" class="idle">Idle</div>
+  <div id="locale">Each storm picks a different river and a listening spot.</div>
   <label class="slider" for="dur">Storm length: <strong id="durLabel">3 minutes</strong></label>
   <input id="dur" type="range" min="1" max="50" step="1" value="3">
   <label class="check" for="accel"><input id="accel" type="checkbox"> Quick test: accelerate ×10 (a 30-minute storm plays in 3 minutes)</label>
@@ -106,7 +113,7 @@
     <button id="btnStorm" class="go" type="button" disabled>Test storm</button>
     <button id="btnStop" class="danger" type="button" disabled>Stop</button>
   </div>
-  <p class="hint">Approach (faint, dull, slow rumble) → peak (loud cracks with lightning) → recession (fading, duller). Random left-to-right or right-to-left drift. Stereo only. Storms of 8 minutes or more add a continuous recorded rain bed that starts faint and far away, closes in over minutes, then recedes.</p>
+  <p class="hint">Every storm is a passing front by a different river, heard from a random listening spot: out in the open, inside a tent, or under a tin, thatch, wooden or tarp roof. Native wildlife plays during the approach, goes quiet at the peak, and returns as the storm recedes. Storms of 8 minutes or more add a continuous rain bed for that roof (or open leaves) that starts faint and far away, closes in over minutes, then recedes. Stereo only.</p>
 </section>
 
 <section class="card">
@@ -117,13 +124,36 @@
 <script>
 (function () {
   const CLIPS = [
-    { id: "rumble_midwest", src: "audio/rumble_midwest.flac", type: "rumble", title: "Distant rumble, Illinois woods" },
-    { id: "rumble_city",     src: "audio/rumble_city.flac",     type: "rumble", title: "Distant city storm" },
-    { id: "crack_nosferatu", src: "audio/crack_nosferatu.flac", type: "crack",  title: "Close thunderclap" },
-    { id: "crack_thunder4",  src: "audio/crack_thunder4.flac",  type: "crack",  title: "Close dry thunderclap (BigSoundBank #4)" },
-    { id: "crack_harlem",    src: "audio/crack_harlem.flac",    type: "crack",  title: "Urban thunder, Harlem" },
-    { id: "crack_orage",     src: "audio/crack_orage.flac",     type: "crack",  title: "Morning storm, Fraisses" },
-    { id: "rain_bed",        src: "audio/rain_bed.flac",        type: "rain",   title: "Rain on leaves, Castelnuovo al Volturno" }
+    { id: "rumble_midwest", src: "audio/rumble_midwest.flac", type: "rumble",    title: "Distant rumble, Illinois woods" },
+    { id: "rumble_city",     src: "audio/rumble_city.flac",     type: "rumble",    title: "Distant city storm" },
+    { id: "crack_nosferatu", src: "audio/crack_nosferatu.flac", type: "crack",     title: "Close thunderclap" },
+    { id: "crack_thunder4",  src: "audio/crack_thunder4.flac",  type: "crack",     title: "Close dry thunderclap (BigSoundBank #4)" },
+    { id: "crack_harlem",    src: "audio/crack_harlem.flac",    type: "crack",     title: "Urban thunder, Harlem" },
+    { id: "crack_orage",     src: "audio/crack_orage.flac",     type: "crack",     title: "Morning storm, Fraisses" },
+    { id: "rain_bed",        src: "audio/rain_bed.flac",        type: "rain",      title: "Rain on leaves, Castelnuovo al Volturno (open)" },
+    { id: "rain_tin",        src: "audio/rain_tin.flac",        type: "rain",      title: "Rain on a tin shed roof" },
+    { id: "rain_tent",       src: "audio/rain_tent.flac",       type: "rain",      title: "Rain on a tent" },
+    { id: "rain_thatch",     src: "audio/rain_thatch.flac",     type: "rain",      title: "Rain under thatch (filtered leaves)" },
+    { id: "rain_wood",       src: "audio/rain_wood.flac",       type: "rain",      title: "Rain under a wooden roof (filtered leaves)" },
+    { id: "rain_tarp",       src: "audio/rain_tarp.flac",       type: "rain",      title: "Rain on a plastic tarpaulin" },
+    { id: "wild_amazon",     src: "audio/wild_amazon.flac",     type: "wildlife", title: "Oropendolas and forest, Amacayacu, Colombia" },
+    { id: "wild_atlantic",   src: "audio/wild_atlantic.flac",   type: "wildlife", title: "Cicadas and birds, Serra da Cantareira, Brazil" },
+    { id: "wild_thailand",   src: "audio/wild_thailand.flac",   type: "wildlife", title: "Cricket chorus, Doi Suthep forest, Thailand" },
+    { id: "wild_ghana",      src: "audio/wild_ghana.flac",      type: "wildlife", title: "Frog chorus, Koforidua wetland, Ghana" }
+  ];
+  const RIVERS = [
+    { id: "amazon",   name: "Amazon, Amacayacu (Colombia)",              wildlife: "wild_amazon",   title: "Oropendolas, forest birds and insects" },
+    { id: "atlantic", name: "Atlantic Forest, Serra da Cantareira (Brazil)", wildlife: "wild_atlantic", title: "Cicadas and birds on the forest trail" },
+    { id: "thailand", name: "Doi Suthep forest stream (northern Thailand)", wildlife: "wild_thailand", title: "Cricket and cicada chorus by the forest stream" },
+    { id: "ghana",    name: "West African wetland, Koforidua (Ghana)",   wildlife: "wild_ghana",    title: "Frog chorus in a Ghanaian wetland" }
+  ];
+  const POSITIONS = [
+    { id: "open",   name: "out in the open, by the river", rain: "rain_bed",    muffle: 18000, thunderGain: 1.00 },
+    { id: "tent",   name: "inside a tent",                 rain: "rain_tent",   muffle: 4200,  thunderGain: 0.88 },
+    { id: "tin",    name: "under a tin roof",              rain: "rain_tin",    muffle: 5200,  thunderGain: 0.90 },
+    { id: "thatch", name: "under a thatched roof",         rain: "rain_thatch", muffle: 3200,  thunderGain: 0.82 },
+    { id: "wood",   name: "under a wooden roof",           rain: "rain_wood",   muffle: 4000,  thunderGain: 0.86 },
+    { id: "tarp",   name: "under a tarp",                  rain: "rain_tarp",   muffle: 6000,  thunderGain: 0.90 }
   ];
   const TEST_FLAC = { id: "test_flac", src: "audio/rumble_city.flac", title: "FLAC (distant city storm)" };
   const TEST_WAV  = { id: "test_wav",  src: "audio/crack_nosferatu.wav", title: "WAV (close thunderclap)" };
@@ -146,6 +176,7 @@
   let stormGen = 0;
   let usingSynth = false;
   let rainBed = null;      // continuous rain layer for long storms (>= 8 real minutes)
+  let wildlifeBed = null;  // river wildlife bed for every storm
 
   // Long-storm rain distance model
   const LONG_STORM_SEC = 480;      // real storm length at/above which the rain bed is used
@@ -154,6 +185,8 @@
   const RAIN_NEAR_CUTOFF = 11000;  // Hz, rain right at the tank
   const RAIN_FAR_PAN = 0.9;        // |pan| at arrival / exit
   const RAIN_BED_LEVEL = 0.5;      // bed level at full intensity (cracks peak at 0.72-0.95)
+  const WILDLIFE_LEVEL = 0.28;     // wildlife bed at full presence (under the rain bed)
+  const WILDLIFE_PEAK_GAIN = 0.012; // near-silence at the storm peak (~ -38 dB)
 
   function nowStamp() {
     const d = new Date();
@@ -170,6 +203,12 @@
     phaseEl.className = name;
     const labels = { idle: "Idle", approach: "Approach", peak: "Peak", recession: "Recession" };
     phaseEl.textContent = (labels[name] || name) + (extra ? " · " + extra : "");
+  }
+  function setLocale(text, live) {
+    const el = $("locale");
+    if (!el) return;
+    el.textContent = text;
+    el.className = live ? "live" : "";
   }
   function setResult(el, ok, detail) {
     el.className = ok ? "ok" : "fail";
@@ -378,8 +417,10 @@
     });
     activeSources = [];
     stopRainBed(0.6);
+    stopWildlifeBed(0.6);
     storm = null;
     setPhase("idle");
+    setLocale("Each storm picks a different river and a listening spot.", false);
     flashEl.classList.remove("on");
   }
 
@@ -420,6 +461,28 @@
     return { s: s, distance: 1 - s, gain: gain, cutoff: cutoff, pan: pan, rate: rate };
   }
 
+  // Wildlife presence: full in the approach, ducks to near silence through the peak,
+  // returns in the recession, then fades with the last 12% of the storm.
+  function wildlifeEnvelope(t, st) {
+    const A = st.approachEnd, P = st.peakEnd, D = st.durationSec;
+    const duckSpan = Math.max(0.8, Math.min(A, Math.max(0.8, P - A)) * 0.18);
+    let presence;
+    if (t <= 0) presence = 1;
+    else if (t < A - duckSpan) presence = 1;
+    else if (t < A) presence = 1 - smooth((t - (A - duckSpan)) / duckSpan);
+    else if (t <= P) presence = 0;
+    else if (t < P + duckSpan) presence = smooth((t - P) / duckSpan);
+    else if (t < D) presence = 1;
+    else presence = 0;
+    let gain = WILDLIFE_PEAK_GAIN * Math.pow(1 / WILDLIFE_PEAK_GAIN, presence);
+    if (t > P) {
+      const fade = (D - t) / Math.max(0.01, (D - P) * 0.12);
+      if (fade < 1) gain *= smooth(fade);
+    }
+    if (t >= D) gain = 0;
+    return { presence: presence, gain: gain };
+  }
+
   // opts.realSec: real storm length (decides long-storm mode); opts.speed: timeline compression.
   function planStorm(durationSec, opts) {
     opts = opts || {};
@@ -427,6 +490,8 @@
     const speed = opts.speed || 1;
     const long = realSec >= LONG_STORM_SEC;
     const direction = Math.random() < 0.5 ? "LtoR" : "RtoL";
+    const river = RIVERS[Math.floor(Math.random() * RIVERS.length)];
+    const position = POSITIONS[Math.floor(Math.random() * POSITIONS.length)];
     const approachEnd = durationSec * 0.32;
     const peakEnd = durationSec * 0.64;
     const envPlan = { approachEnd: approachEnd, peakEnd: peakEnd, durationSec: durationSec,
@@ -479,6 +544,9 @@
         intensity = intensity * lerp(0.4, 1, env.s);
         attack = Math.max(0.6, rand(6, 20) / speed);
       }
+      // Tent and roof positions slightly muffle thunder (lowpass + a little less gain).
+      cutoff = Math.min(cutoff, position.muffle);
+      gain = gain * position.thunderGain;
       events.push({
         t: t, phase: phase, clip: clipMeta, rate: rate, cutoff: cutoff,
         gain: gain, pan: pan, flashDelay: flashDelay, intensity: intensity,
@@ -490,7 +558,8 @@
       t += gap;
     }
     return { direction: direction, events: events, approachEnd: approachEnd, peakEnd: peakEnd, durationSec: durationSec,
-      arriveSide: envPlan.arriveSide, exitSide: envPlan.exitSide, long: long, realSec: realSec, speed: speed };
+      arriveSide: envPlan.arriveSide, exitSide: envPlan.exitSide, long: long, realSec: realSec, speed: speed,
+      river: river, position: position };
   }
 
   // ---------- Continuous rain bed (long storms only) ----------
@@ -529,7 +598,8 @@
     env.gain.setValueAtTime(0, t0 + D + 0.05);
 
     // Recorded rain loop only — no synthesised noise, no rumble-chunk bed.
-    const rainBuf = buffers["rain_bed"];
+    const rainId = (st.position && st.position.rain) || "rain_bed";
+    const rainBuf = buffers[rainId] || buffers["rain_bed"];
     const sources = [];
     if (rainBuf) {
       const src = ctx.createBufferSource();
@@ -561,7 +631,7 @@
       if (el > D + 1) stopRainBed(0.05);
     }, 2000);
     rainBed = bed;
-    log("Rain bed on — recorded rain loop" + (rainBuf ? "" : " MISSING, silent") +
+    log("Rain bed on — " + rainId + (rainBuf ? "" : " MISSING, silent") +
         ", starts " + Math.round(e0.distance * 100) + "% away (" +
         (20 * Math.log10(e0.gain)).toFixed(0) + " dB, lp " + Math.round(e0.cutoff) + " Hz, pan " + e0.pan.toFixed(2) +
         "), reaches the tank at " + fmtTime(A) + ", recedes from " + fmtTime(P) + ".");
@@ -573,6 +643,75 @@
     if (!bed) return;
     rainBed = null;
     if (bed.timer) clearInterval(bed.timer);
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    try {
+      bed.out.gain.cancelScheduledValues(t);
+      bed.out.gain.setValueAtTime(bed.out.gain.value, t);
+      bed.out.gain.linearRampToValueAtTime(0, t + fadeSec);
+    } catch (e) {}
+    bed.sources.forEach(function (src) { try { src.stop(t + fadeSec + 0.05); } catch (e) {} });
+    setTimeout(function () {
+      try { bed.out.disconnect(); } catch (e) {}
+    }, (fadeSec + 0.3) * 1000);
+  }
+
+  function wildlifeCurve(st, fromT, toT) {
+    const len = Math.max(2, Math.ceil(toT - fromT) + 1);
+    const arr = new Float32Array(len);
+    for (let i = 0; i < len; i++) {
+      const t = fromT + (toT - fromT) * (i / (len - 1));
+      arr[i] = wildlifeEnvelope(t, st).gain;
+    }
+    return arr;
+  }
+
+  function startWildlifeBed(st, t0) {
+    stopWildlifeBed(0.05);
+    const D = st.durationSec, A = st.approachEnd, P = st.peakEnd;
+    const wildId = st.river && st.river.wildlife;
+    const wildBuf = wildId ? buffers[wildId] : null;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.Q.value = 0.7;
+    lp.frequency.value = (st.position && st.position.muffle) || 18000;
+    const env = ctx.createGain();
+    const out = ctx.createGain();
+    out.gain.value = WILDLIFE_LEVEL;
+    const e0 = wildlifeEnvelope(0, st);
+    env.gain.value = e0.gain;
+    const s0 = t0 + 0.05;
+    const duckSpan = Math.max(0.8, Math.min(A, Math.max(0.8, P - A)) * 0.18);
+    const duckFrom = Math.max(0.05, A - duckSpan);
+    env.gain.setValueCurveAtTime(wildlifeCurve(st, duckFrom, A), t0 + duckFrom, A - duckFrom);
+    env.gain.setValueAtTime(WILDLIFE_PEAK_GAIN, t0 + A);
+    env.gain.setValueCurveAtTime(wildlifeCurve(st, P, D), t0 + P, D - P);
+    env.gain.setValueAtTime(0, t0 + D + 0.05);
+    const sources = [];
+    if (wildBuf) {
+      const src = ctx.createBufferSource();
+      src.buffer = wildBuf;
+      src.loop = true;
+      src.playbackRate.value = 1;
+      src.connect(lp);
+      lp.connect(env);
+      env.connect(out);
+      out.connect(master);
+      src.start(s0);
+      src.stop(t0 + D + 0.5);
+      sources.push(src);
+    }
+    wildlifeBed = { t0: t0, st: st, lp: lp, env: env, out: out, sources: sources };
+    log("Wildlife bed on — " + (st.river ? st.river.name : "?") +
+        " (" + (wildId || "none") + (wildBuf ? "" : " MISSING, silent") + ")" +
+        ", " + (st.position ? st.position.name : "open") +
+        ", muffle lp " + Math.round(lp.frequency.value) + " Hz. Full in the approach, ducks at the peak, returns in the recession.");
+    return wildlifeBed;
+  }
+
+  function stopWildlifeBed(fadeSec) {
+    const bed = wildlifeBed;
+    if (!bed) return;
+    wildlifeBed = null;
     if (!ctx) return;
     const t = ctx.currentTime;
     try {
@@ -609,8 +748,12 @@
     storm.gen = gen;
     if (speed !== 1) log("Quick test ×" + speed + ": real storm " + fmtTime(realSec) + " compressed to " + fmtTime(storm.durationSec) + ".");
     if (storm.long) startRainBed(storm, t0);
-    log("Storm start — " + minutes + " min" + (speed !== 1 ? " (playing in " + fmtTime(storm.durationSec) + ")" : "") + ", drift " +
-        (storm.direction === "LtoR" ? "left → right" : "right → left") +
+    startWildlifeBed(storm, t0);
+    const place = storm.river.name + " · " + storm.position.name;
+    setLocale(place, true);
+    log("Storm start — " + minutes + " min" + (speed !== 1 ? " (playing in " + fmtTime(storm.durationSec) + ")" : "") +
+        ", " + place +
+        ", drift " + (storm.direction === "LtoR" ? "left → right" : "right → left") +
         ", " + storm.events.length + " events" +
         (usingSynth ? " (synthesised fallback)" : "") + ".");
     storm.events.forEach(function (ev) {
@@ -639,16 +782,19 @@
       if (!storm || storm.gen !== gen) return;
       log("Storm ended.");
       stopRainBed(0.5);
+      stopWildlifeBed(0.5);
       storm = null;
       setPhase("idle");
+      setLocale("Each storm picks a different river and a listening spot.", false);
       stormRAF = null;
     }, endMs);
     function tick() {
       if (!storm || storm.gen !== gen) return;
       const elapsed = ctx.currentTime - storm.t0;
       let extra = "";
-      if (storm.long && elapsed < storm.durationSec) {
-        extra = "rain " + Math.round(rainEnvelope(elapsed, storm).distance * 100) + "% away";
+      if (elapsed < storm.durationSec && storm.river) {
+        extra = storm.river.id + " · " + storm.position.id;
+        if (storm.long) extra += " · rain " + Math.round(rainEnvelope(elapsed, storm).distance * 100) + "% away";
       }
       if (elapsed < storm.approachEnd) setPhase("approach", extra);
       else if (elapsed < storm.peakEnd) setPhase("peak", extra);

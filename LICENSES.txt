@@ -131,3 +131,123 @@ Not used (and why)
   Very close thunder cracks.flac, the Groningen lightning WAVs) were
   available as lossless files but were not used, because this test pack
   is limited to public domain, CC0, or CC BY.
+
+
+8. wild_amazon.flac  — Amazon wildlife bed   [added 19 Nov 2026]
+   Title:    Pájaro Arrendajo (oropendola and forest), Parque Nacional Natural Amacayacu
+   Author:   etnosonica
+   Source:   https://archive.org/details/aporee_19389_22515
+             radio aporee: Parque Nacional Natural Amacayacu, Amazonas, Colombia
+   Original: WAV, 44.1 kHz, 16-bit, stereo, 2 min 42 s
+   Licence:  Public Domain Mark 1.0
+             https://creativecommons.org/publicdomain/mark/1.0/
+   Excerpt:  111.0 s–145.0 s (34.0 s): oropendola and other forest birds over a
+             continuous insect bed. 50 Hz high-pass, 2 s equal-power crossfade
+             of the end into the start, yielding a 32.0 s seamless loop;
+             44.1 kHz, 16-bit, peak-normalised to −6 dBFS.
+             The untouched original FLAC is kept outside the site in
+             source/river-locations/aporee_19389_amacayacu_oropendola.flac.
+
+9. wild_atlantic.flac  — South American rainforest wildlife bed   [added 19 Nov 2026]
+   Title:    Trilha das Figueiras — iii (cicadas and birds)
+   Author:   melissapons
+   Source:   https://archive.org/details/aporee_34339_39475
+             radio aporee: Parque da Cantareira, Vila Santos, São Paulo, Brazil
+   Original: WAV, 48 kHz, 24-bit, stereo, 2 min 0 s
+   Licence:  Public Domain Mark 1.0
+             https://creativecommons.org/publicdomain/mark/1.0/
+   Excerpt:  14.0 s–48.0 s (34.0 s): a steady daytime cicada chorus with birds.
+             2 s equal-power crossfade, resampled to 44.1 kHz (soxr), 16-bit,
+             peak-normalised to −6 dBFS.
+             Untouched original: source/river-locations/aporee_34339_cantareira_cicadas_birds.flac.
+
+10. wild_thailand.flac  — Southeast Asian jungle-stream wildlife bed   [added 19 Nov 2026]
+    Title:    Impressive crickets of Doï Suthep Forest, Thailand
+    Author:   Claire Sauvaget
+    Source:   https://archive.org/details/aporee_68792_79799
+              radio aporee: Ban Bhubing / Doi Suthep Forest, Chiang Mai, Thailand
+    Original: WAV, 48 kHz, 24-bit, stereo, 2 min 4 s
+    Gear:     Zoom H4n and binaural microphones
+    Licence:  Public Domain Mark 1.0
+              https://creativecommons.org/publicdomain/mark/1.0/
+    Excerpt:  31.0 s–65.0 s (34.0 s): a dense cricket/cicada chorus (the
+              filename also marks water, “EAU”, in the forest). 2 s equal-power
+              crossfade, resampled to 44.1 kHz (soxr), 16-bit, peak-normalised
+              to −6 dBFS.
+              Untouched original: source/river-locations/aporee_68792_doi_suthep_crickets.flac.
+
+11. wild_ghana.flac  — West African river / wetland wildlife bed   [added 19 Nov 2026]
+    Title:    Amphibian Chorus, Ghana
+    Author:   Samuel Kudjodzi
+    Source:   https://archive.org/details/aporee_57750_66116
+              radio aporee: Bonya, Koforidua, Eastern Region, Ghana
+    Original: WAV, 48 kHz, 24-bit, stereo, 6 min 32 s (binaural)
+    Licence:  Public Domain Mark 1.0
+              https://creativecommons.org/publicdomain/mark/1.0/
+    Note:     Recorded in a suburban wetland settlement. Frog species noted
+              by the recordist include Phrynobatrachus latifrons. The 34 s
+              window used here is a continuous frog chorus with no obvious
+              voices, traffic or engines.
+    Excerpt:  207.0 s–241.0 s (34.0 s). 2 s equal-power crossfade, resampled
+              to 44.1 kHz (soxr), 16-bit, peak-normalised to −6 dBFS.
+              Untouched original: source/river-locations/aporee_57750_ghana_amphibian_chorus.flac.
+
+12. rain_tin.flac  — rain on a tin roof   [added 19 Nov 2026]
+    Title:    Rain on a tin roof of old shed
+    Author:   Duane Null
+    Source:   https://archive.org/details/aporee_66172_76498
+              radio aporee: 42 Mt Zero Rd, Halls Gap, Victoria, Australia
+    Original: WAV, 48 kHz, 16-bit, stereo, 6 min 58 s
+    Gear:     Zoom H6 internal microphones with a deadcat, inside an abandoned metal shed
+    Licence:  Public Domain Mark 1.0
+              https://creativecommons.org/publicdomain/mark/1.0/
+    Excerpt:  352.0 s–386.0 s (34.0 s): a steady stretch of rain on corrugated
+              metal. 2 s equal-power crossfade, resampled to 44.1 kHz (soxr),
+              16-bit, peak-normalised to −4 dBFS.
+              Untouched original: source/river-locations/aporee_66172_tin_shed_hallsgap.flac.
+
+13. rain_tent.flac  — rain on a tent   [added 19 Nov 2026]
+    Title:    pluie tente, Ackerman Campground
+    Author:   Virgile Loiseau
+    Source:   https://archive.org/details/aporee_70996_82798
+              radio aporee: Ackerman Campground, California, USA
+    Original: WAV, 48 kHz, 24-bit, stereo, 7 min 32 s
+    Gear:     Zoom H1, internal XY microphones
+    Licence:  Public Domain Mark 1.0
+              https://creativecommons.org/publicdomain/mark/1.0/
+    Excerpt:  228.0 s–262.0 s (34.0 s): a steady stretch of rain on tent fabric,
+              without voices or zippers. 2 s equal-power crossfade, resampled to
+              44.1 kHz (soxr), 16-bit, peak-normalised to −4 dBFS.
+              Untouched original: source/river-locations/aporee_70996_rain_tent_ackerman.flac.
+
+14. rain_tarp.flac  — rain on a plastic tarpaulin   [added 19 Nov 2026]
+    Title:    Rain on plastic tarpaulin
+    Author:   Joseph SARDIN (BigSoundBank / LaSonotheque), sound no. 1292
+    Source:   https://bigsoundbank.com/rain-on-plastic-tarpaulin-s1292.html
+              lossless file: https://bigsoundbank.com/UPLOAD/flac/1292.flac
+    Original: FLAC, 48 kHz, 24-bit, mono, 85.3 s
+    Licence:  CC0 1.0 (public-domain equivalent; attribution not required,
+              given here anyway) https://creativecommons.org/publicdomain/zero/1.0/
+    Excerpt:  20.0 s–54.0 s (34.0 s). Upmixed to dual-mono stereo, 2 s
+              equal-power crossfade, resampled to 44.1 kHz (soxr), 16-bit,
+              peak-normalised to −4 dBFS.
+              Untouched original: source/river-locations/bsb_1292_rain_tarpaulin.flac.
+
+15. rain_thatch.flac and rain_wood.flac  — filtered rain beds   [added 19 Nov 2026]
+    No freely licensed, lossless recording of rain on thatch or on a wooden
+    roof (without thunder, voices or a lossy original) was found, so these
+    two beds are EQ’d from the same Public Domain rain-on-leaves source as
+    rain_bed.flac (raphael.malfliet, radio aporee / Internet Archive,
+    https://archive.org/details/aporee_65214_75311). The unprocessed 34 s
+    excerpt in source/aporee_65214_rain_on_leaves_excerpt_48k24.flac is the
+    starting point.
+
+    rain_thatch.flac: low-pass 7.5 kHz, high-shelf −3.5 dB at 5 kHz, low-shelf
+    +1.5 dB at 180 Hz, then the same 2 s loop, 44.1 kHz / 16-bit, −4 dBFS.
+    Intended to sound softer and more fibrous than open rain on leaves.
+
+    rain_wood.flac: low-pass 5.5 kHz, peaking +3 dB at 280 Hz, high-shelf
+    −5.5 dB at 4 kHz, then the same loop chain. Intended to sound duller
+    and more wooden-bodied, with less leaf tick.
+
+    Open-air listening still uses the unfiltered rain_bed.flac.

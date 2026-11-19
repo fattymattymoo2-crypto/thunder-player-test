@@ -68,3 +68,25 @@ Limitations: the public tunnel URL is temporary; output is stereo only
   0.90 → 1.00; short storms still swell rain/rumble clips over 2–8 s.
 - Backup of the previous page, licences and README:
   `backups/2026-11-18-before-rain-swap/` (workspace only, not deployed).
+
+## River locations and listening spots (19 Nov 2026)
+
+- Every storm now picks a **river region** and a **listening spot** at random.
+  A readout under the phase label shows both. This is on a local branch only
+  until Matthew confirms a publish.
+- **Wildlife bed** (every storm, including short ones): a 32 s seamless loop
+  of a field recording from that river. It plays fully during the approach,
+  ducks to near silence through the peak, and returns in the recession, with
+  a fade on the last 12% of the storm. Regions in this build:
+  - Amazon, Amacayacu National Park, Colombia (`audio/wild_amazon.flac`)
+  - Atlantic Forest, Serra da Cantareira, Brazil (`audio/wild_atlantic.flac`)
+  - Doi Suthep forest stream, northern Thailand (`audio/wild_thailand.flac`)
+  - West African wetland, Koforidua, Ghana (`audio/wild_ghana.flac`)
+- **Listening spots:** out in the open (existing rain-on-leaves bed), inside a
+  tent, or under a tin, thatch, wooden or tarp roof. Long storms (≥ 8 real
+  minutes) use a rain bed recorded on that surface where one existed, or a
+  filtered version of the leaves bed for thatch and wood. Tent and roof spots
+  also slightly muffle thunder and wildlife (a lower low-pass and a little
+  less thunder gain).
+- Backup of the previous page, licences, README and audio:
+  `backups/2026-11-19-before-river-locations/` (workspace only, not deployed).
