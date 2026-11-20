@@ -251,3 +251,23 @@ Not used (and why)
     and more wooden-bodied, with less leaf tick.
 
     Open-air listening still uses the unfiltered rain_bed.flac.
+
+16. rain_campervan.flac  — rain on a camper van roof, heard from inside (Jill's page)   [added 20 Nov 2026]
+    Title:    Hooker Valley Road, Aoraki Mount Cook National Park, New Zealand -
+              Rain at night inside a van at White Horse Hill Campsite
+    Author:   Jimmy Solórzano (radio aporee ::: maps)
+    Source:   https://archive.org/details/aporee_56335_64422
+              lossless file: RainInsideCarMountCookNewZealandJUN22441kHz.wav
+    Original: WAV, 44.1 kHz, 24-bit, stereo, 12 min 49 s (Zoom H4, 2 June 2021)
+    Licence:  Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+              https://creativecommons.org/licenses/by/3.0/
+    Excerpt:  10.0 s–58.0 s, made into a seamless 46.0 s loop with a 2 s
+              equal-power crossfade, 44.1 kHz / 16-bit, peak-normalised to −4 dBFS.
+              Untouched original kept outside the site in
+              /workspace/thunder-web/source/jill/aporee_56335_rain_inside_van.wav.
+    Credit:   "Rain at night inside a van at White Horse Hill Campsite" by
+              Jimmy Solórzano, CC BY 3.0. Trimmed and looped for jill.html.
+
+jill.html also plays rain_tent.flac (no. 13) and rain_tin.flac (no. 12) as
+plain loops, and a placeholder audio/jill_sleepy_music.mp3 that is not yet
+on the site (the page says "coming soon" until it is added).

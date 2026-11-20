@@ -73,6 +73,8 @@
     transition: background .3s, opacity .4s; }
   .btn-ghost:hover { background: rgba(255,255,255,.14); }
   .btn-ghost[hidden] { display: none; }
+  .btn-jill { color: #e8dcff; border-color: rgba(200,185,255,.28); background: rgba(120,100,180,.16); }
+  .btn-jill[aria-pressed="true"] { background: rgba(160,140,230,.42); color: #fff; border-color: rgba(220,210,255,.6); box-shadow: 0 0 24px rgba(170,150,255,.35); }
   #status { font-size: .85rem; color: var(--muted); min-height: 1.3em; margin: 4px 0 0; text-shadow: 0 1px 10px rgba(0,0,0,.8); }
 
   /* Live storm distance readout */
@@ -258,6 +260,7 @@
     </div>
     <div class="play">
       <button id="btnStop" class="btn-ghost" type="button" hidden>Stop the storm</button>
+      <button id="btnJill" class="btn-ghost btn-jill" type="button" aria-pressed="false"><span aria-hidden="true">☾</span> Jill's sleepy music</button>
     </div>
     <p id="status">Best with headphones or good stereo speakers.</p>
   </section>
@@ -371,6 +374,8 @@
     { id: "wood",   name: "under a wooden roof",           rain: "rain_wood",   muffle: 4000,  thunderGain: 0.86 },
     { id: "tarp",   name: "under a tarp",                  rain: "rain_tarp",   muffle: 6000,  thunderGain: 0.90 }
   ];
+  // Jill's sleepy music: drop the real file at this path (or change the path) to make the button play it.
+  const JILL_TRACK = "audio/jill_sleepy_music.mp3";
   const TEST_FLAC = { id: "test_flac", src: "audio/rumble_city.flac", title: "FLAC (distant city storm)" };
   const TEST_WAV  = { id: "test_wav",  src: "audio/crack_nosferatu.wav", title: "WAV (close thunderclap)" };
 
@@ -1117,6 +1122,7 @@
     return ctx;
   }
   function applyLiveSettings() {
+    if (jillAudio) jillAudio.volume = clamp(S.masterVol / 100, 0, 1);
     if (!ctx) return;
     const t = ctx.currentTime;
     master.gain.setTargetAtTime(S.masterVol / 100, t, 0.06);
@@ -1215,8 +1221,58 @@
   }
 
   // ---------- Storm ----------
+  // ---------- Jill's sleepy music: no storm, just her track ----------
+  let jillAudio = null;
+  function setJillButton(on) {
+    const b = $("btnJill");
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.lastChild.textContent = on ? " Stop Jill's sleepy music" : " Jill's sleepy music";
+  }
+  function stopJill(quiet) {
+    if (!jillAudio) return false;
+    const a = jillAudio; jillAudio = null;
+    try { a.pause(); a.removeAttribute("src"); a.load(); } catch (e) {}
+    setJillButton(false);
+    if (!quiet) { log("Jill's sleepy music stopped."); statusEl.textContent = "Jill's sleepy music stopped."; }
+    return true;
+  }
+  function toggleJill() {
+    if (stopJill(false)) return;
+    // Stop and hold off any storm: no thunder, lightning, rain, wildlife or flashes.
+    cancelAutoRepeat();
+    if (storm) { stopAll(); log("Storm stopped for Jill's sleepy music."); }
+    const a = new Audio();
+    a.preload = "auto";
+    a.loop = false;
+    a.volume = clamp(S.masterVol / 100, 0, 1);
+    a.src = JILL_TRACK;
+    jillAudio = a;
+    setJillButton(true);
+    const comingSoon = function () {
+      if (jillAudio !== a) return;
+      jillAudio = null; setJillButton(false);
+      showSurpriseNote("Jill's sleepy music is coming soon");
+      statusEl.textContent = "Jill's sleepy music is coming soon.";
+      log("Jill's sleepy music is coming soon: " + JILL_TRACK + " isn't on the site yet, so nothing played.");
+    };
+    a.addEventListener("error", comingSoon);
+    a.addEventListener("ended", function () { if (jillAudio === a) { jillAudio = null; setJillButton(false); statusEl.textContent = "Jill's sleepy music has finished."; log("Jill's sleepy music finished."); } });
+    const p = a.play();   // called straight from the tap so iPad Safari allows it
+    if (p && p.then) p.then(function () {
+      if (jillAudio !== a) return;
+      showSurpriseNote("");
+      statusEl.textContent = "Playing Jill's sleepy music. No storm.";
+      log("Playing Jill's sleepy music (" + JILL_TRACK + ").");
+      requestWake();
+    }).catch(function (err) {
+      if (a.error || (err && err.name === "NotSupportedError")) comingSoon();
+      else if (jillAudio === a) { jillAudio = null; setJillButton(false); statusEl.textContent = "Tap Jill's sleepy music again to play it."; log("Jill's sleepy music couldn't start: " + (err && err.message ? err.message : err)); }
+    });
+  }
+
   async function startStorm() {
     cancelAutoRepeat();
+    stopJill(true);
     const ok = await unlockAudio();
     if (!ok) return;
     if (ctx.state !== "running") { try { await ctx.resume(); } catch (e) {} }
@@ -1850,6 +1906,7 @@
   $("btnStorm").addEventListener("click", function () {
     startStorm().catch(function (err) { log("Storm error: " + (err && err.message ? err.message : err)); statusEl.textContent = "Something went wrong starting the storm."; });
   });
+  $("btnJill").addEventListener("click", toggleJill);
   $("btnStop").addEventListener("click", function () {
     cancelAutoRepeat(); stopAll(); log("Stopped.");
     statusEl.textContent = "Stopped. Press Start for a new storm.";
