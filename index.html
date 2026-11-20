@@ -75,6 +75,35 @@
   .btn-ghost[hidden] { display: none; }
   #status { font-size: .85rem; color: var(--muted); min-height: 1.3em; margin: 4px 0 0; text-shadow: 0 1px 10px rgba(0,0,0,.8); }
 
+  /* Live storm distance readout */
+  #distance { width: min(460px, 100%); padding: 12px 16px; border-radius: 16px; background: rgba(4,12,10,.45); border: 1px solid var(--line);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); text-align: left; transition: opacity .8s, border-color .8s; }
+  #distance.idle { opacity: .75; }
+  #distance.near { border-color: rgba(246,210,142,.35); }
+  .dist-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .dist-pct { font-family: var(--serif); font-size: 1.35rem; color: #f3ead2; font-variant-numeric: tabular-nums; }
+  .dist-trend { font-size: .74rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); text-align: right; }
+  #distance.closing .dist-trend { color: #9fc0d8; } #distance.near .dist-trend { color: var(--amber-2); } #distance.leaving .dist-trend { color: #b9b0e0; }
+  .dist-track { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: .68rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .dist-bar { position: relative; flex: 1; height: 6px; border-radius: 6px; background: rgba(255,255,255,.12); }
+  .dist-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 6px; background: linear-gradient(90deg, #4f7088, var(--amber)); transition: width .9s linear; }
+  .dist-bar b { position: absolute; top: 50%; left: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #fff3d6;
+    box-shadow: 0 0 12px rgba(246,210,142,.8); transition: left .9s linear; }
+  .dist-meta { margin-top: 7px; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* Home-screen engine log */
+  .logpanel { width: 100%; max-width: 1040px; margin: 10px auto 0; padding: 10px 14px 12px; border-radius: 16px; background: rgba(2,8,6,.5);
+    border: 1px solid var(--line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .logpanel > summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .logpanel > summary::-webkit-details-marker { display: none; }
+  .logpanel > summary .eyebrow { margin: 0; }
+  .logpanel > summary .eyebrow::after { content: " ▾"; } .logpanel:not([open]) > summary .eyebrow::after { content: " ▸"; }
+  .loghint { font-size: .76rem; color: var(--muted); }
+  .logtools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 0; font-size: .78rem; }
+  .chip { padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--muted); }
+  .btn-ghost.small { min-height: 32px; padding: 0 14px; font-size: .8rem; }
+  .logpanel #log { height: 150px; background: rgba(0,0,0,.35); font-size: 11px; }
+
   /* Main-screen time slider and control strip */
   .timecard { width: min(560px, 100%); padding: 16px 18px 14px; border-radius: 20px; text-align: left; background: var(--glass);
     border: 1px solid var(--line); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
@@ -202,6 +231,11 @@
 
   <section class="centre" aria-live="polite">
     <div id="phase" class="idle">Calm</div>
+    <div id="distance" class="idle" aria-live="off">
+      <div class="dist-top"><span class="dist-pct" id="distPct">No storm nearby</span><span class="dist-trend" id="distTrend">the river is calm</span></div>
+      <div class="dist-track" aria-hidden="true"><span class="dist-far">far</span><div class="dist-bar"><i id="distFill"></i><b id="distDot"></b></div><span class="dist-near">at the river</span></div>
+      <div class="dist-meta" id="distMeta">Each storm approaches from far away, passes overhead, then moves on.</div>
+    </div>
     <div id="locale" class="idle"><span class="river">Waiting by the river</span><span class="spot">Every storm picks a river and a place to shelter</span></div>
     <div id="surpriseNote" aria-live="polite"></div>
     <div class="timecard">
@@ -226,12 +260,22 @@
     <div class="strip" id="mainControls"></div>
     <div class="dots" id="dots"></div>
   </section>
+
+  <details class="logpanel" id="logPanel" open>
+    <summary><span class="eyebrow">Engine log</span><span class="loghint">every flash, rumble and rain move, live</span></summary>
+    <div class="logtools">
+      <span class="chip">FLAC <span id="flacStatus" class="pending">not tested</span></span>
+      <span class="chip">WAV <span id="wavStatus" class="pending">not tested</span></span>
+      <button id="btnTest" class="btn-ghost small" type="button">Test sound</button>
+    </div>
+    <pre id="log">Waiting for the first storm.</pre>
+  </details>
 </main>
 
 <aside class="drawer" id="drawer" aria-label="Advanced settings">
   <button class="handle" id="handle" type="button" aria-expanded="false" aria-controls="drawerBody">
     <span class="grip" aria-hidden="true"></span>
-    <span><strong>Advanced settings</strong><small>River and spot, surprise mode, drift, sound check, credits</small></span>
+    <span><strong>Advanced settings</strong><small>River and spot, surprise mode, quick test, drift, credits</small></span>
     <span class="chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 9l5-5 5 5" fill="none" stroke="#f6d28e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </button>
   <div class="drawer-body" id="drawerBody">
@@ -333,7 +377,7 @@
   const SECTIONS = [
     { id: "where",    title: "River & listening spot", blurb: "Random unless you pick one", open: true },
     { id: "surprise", title: "Surprise mode",          blurb: "Let the storm break its own rules" },
-    { id: "playback", title: "Playback & testing",     blurb: "Quick test, drift, volume, sound check" }
+    { id: "playback", title: "Playback",              blurb: "Quick test, drift, volume, falling rain" }
   ];
   const pct = (v) => Math.round(v) + "%";
   const SCHEMA = [
@@ -431,7 +475,6 @@
       d.querySelector("summary span").textContent = sec.blurb;
       const body = d.querySelector(".sec-body");
       SCHEMA.filter((c) => c.sec === sec.id).forEach((c) => body.appendChild(buildControl(c)));
-      if (sec.id === "playback") body.appendChild(buildAdvancedExtras());
       root.appendChild(d);
     });
     refreshControls();
@@ -462,18 +505,6 @@
     const p = document.createElement("p"); p.className = "desc"; p.textContent = c.desc; w.appendChild(p);
     if (c.warn) { const wp = document.createElement("p"); wp.className = "warn"; wp.textContent = "⚠ " + c.warn; w.appendChild(wp); }
     return w;
-  }
-  function buildAdvancedExtras() {
-    const box = document.createElement("div");
-    box.className = "ctl";
-    box.innerHTML =
-      '<div class="ctl-top"><span class="name" style="font-weight:600">Sound check</span></div>' +
-      '<p class="desc">Plays one FLAC clip and then one WAV clip, and reports whether this browser can decode each format.</p>' +
-      '<div class="results"><div class="result"><strong>FLAC decode</strong><span id="flacStatus" class="pending">Not tested</span></div>' +
-      '<div class="result"><strong>WAV decode</strong><span id="wavStatus" class="pending">Not tested</span></div></div>' +
-      '<div class="row"><button id="btnTest" class="btn-ghost" type="button" style="flex:1">Test sound</button></div>' +
-      '<details><summary style="cursor:pointer;color:var(--muted);font-size:.88rem">Engine log</summary><pre id="log">Waiting for the first storm.</pre></details>';
-    return box;
   }
   function refreshControls() {
     SCHEMA.forEach((c) => {
@@ -1079,6 +1110,8 @@
         (fail ? ok + " sounds ready (" + fail + " failed)." : "Sounds ready. Best with headphones or good stereo speakers.");
       btn.disabled = false;
       unlocked = true;
+      // Same as the original page: confirm FLAC and WAV decoding in the background (fills the log-panel chips).
+      testFormats(false).catch(function () {});
       return true;
     })();
     return loading;
@@ -1109,7 +1142,9 @@
     stopSurpriseRain(0.6);
     if (duck) { duck.gain.cancelScheduledValues(t); duck.gain.setTargetAtTime(1, t, 0.15); }
     storm = null;
+    lastStrike = null;
     setPhase("idle");
+    updateDistance(null);
     setLocale(IDLE_LOCALE[0], IDLE_LOCALE[1], false);
     updateButtons(false);
   }
@@ -1154,6 +1189,7 @@
       setTimeout(function () {
         if (!storm || storm.gen !== gen) return;
         if (Math.random() < Math.min(1, S.flashRate / 100)) lightning(ev.intensity, ev.pan);
+        lastStrike = { delay: ev.flashDelay };
         log(ev.phase.toUpperCase() + "  flash, thunder in " + ev.flashDelay.toFixed(2) + "s  " + ev.clip.id +
             "  pan " + ev.pan.toFixed(2) + "  gain " + ev.gain.toFixed(ev.gain < 0.1 ? 3 : 2) + "  lp " + Math.round(ev.cutoff) + " Hz");
       }, Math.max(0, ev.t * 1000));
@@ -1179,7 +1215,9 @@
       log("Storm ended.");
       stopRainBed(0.5); stopWildlifeBed(0.5); stopSurpriseRain(0.5); cancelSurprises();
       storm = null;
+      lastStrike = null;
       setPhase("idle");
+      updateDistance(null);
       setLocale(IDLE_LOCALE[0], IDLE_LOCALE[1], false);
       updateButtons(false);
       stormRAF = null;
@@ -1195,6 +1233,7 @@
       if (!storm || storm.gen !== gen) return;
       const elapsed = ctx.currentTime - storm.t0;
       const shown = fmtTime(Math.min(storm.realSec, elapsed * storm.speed)) + " of " + fmtTime(storm.realSec);
+      updateDistance(elapsed);
       if (elapsed < storm.approachEnd) setPhase("approach", shown);
       else if (elapsed < storm.peakEnd) setPhase("peak", shown);
       else if (elapsed < storm.durationSec) setPhase("recession", shown);
@@ -1202,6 +1241,36 @@
       stormRAF = requestAnimationFrame(tick);
     }
     tick();
+  }
+  // Live distance readout (restored from the original test page's "rain N% away", now for every storm).
+  let lastStrike = null, distKey = "";
+  function updateDistance(elapsed) {
+    const box = $("distance");
+    if (!storm || elapsed == null || elapsed >= storm.durationSec) {
+      if (distKey === "idle") return;
+      distKey = "idle"; box.className = "idle";
+      $("distPct").textContent = "No storm nearby"; $("distTrend").textContent = "the river is calm";
+      $("distFill").style.width = "0%"; $("distDot").style.left = "0%";
+      $("distMeta").textContent = "Each storm approaches from far away, passes overhead, then moves on.";
+      return;
+    }
+    const e = rainEnvelope(elapsed, storm);
+    const away = Math.round(e.distance * 100), near = 100 - away;
+    let cls, trend;
+    if (elapsed < storm.approachEnd) { cls = away <= 10 ? "near" : "closing"; trend = away >= 67 ? "far off, closing in" : away >= 34 ? "closing in" : "almost here"; }
+    else if (elapsed < storm.peakEnd) { cls = "near"; trend = "overhead"; }
+    else { cls = "leaving"; trend = away >= 67 ? "far off, fading" : "moving away"; }
+    const side = e.pan < -0.15 ? ", to your left" : e.pan > 0.15 ? ", to your right" : "";
+    const meta = (storm.long ? "Rain " + (away === 0 ? "at the river" : away + "% away" + side) : "Quick shower" + side) +
+      (lastStrike ? " · last strike " + lastStrike.delay.toFixed(1) + " s flash-to-thunder (≈ " + (lastStrike.delay * 0.343).toFixed(1) + " km)" : "");
+    const key = cls + away + meta;
+    if (key === distKey) return;
+    distKey = key;
+    box.className = cls;
+    $("distPct").textContent = away === 0 ? "Right overhead" : away + "% away";
+    $("distTrend").textContent = trend;
+    $("distFill").style.width = near + "%"; $("distDot").style.left = near + "%";
+    $("distMeta").textContent = meta;
   }
   function cancelAutoRepeat() { if (repeatTimer) { clearTimeout(repeatTimer); repeatTimer = null; } }
 
@@ -1261,6 +1330,7 @@
     surpriseTimers.push(setTimeout(function () {
       if (!storm || storm.gen !== gen) return;
       lightning(Math.max(0.95, storm.k), pan);
+      lastStrike = { delay: fd };
       surpriseTimers.push(setTimeout(function () {
         if (!storm || storm.gen !== gen) return;
         playBuffer(bufferFor(clip), { gain: Math.min(1.2, 0.85 * Math.pow(storm.k, 0.7)) * storm.position.thunderGain, pan: pan,
@@ -1696,6 +1766,8 @@
 
   // ---------- Wiring ----------
   buildControls();
+  try { if (localStorage.getItem("thunderPlayer.logOpen") === "0") $("logPanel").open = false; } catch (e) {}
+  $("logPanel").addEventListener("toggle", function () { try { localStorage.setItem("thunderPlayer.logOpen", this.open ? "1" : "0"); } catch (e) {} });
   // Main-screen time slider: 0 = Random (8-50 min). Letting go of it starts a storm if none is playing.
   $("timeSlider").addEventListener("input", function () {
     const v = parseInt(this.value, 10);
