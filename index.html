@@ -41,7 +41,7 @@
   .intro { font-size: clamp(.95rem, 2.4vw, 1.08rem); line-height: 1.5; color: #d9dccd; max-width: 34em; margin: 10px 0 0;
     text-shadow: 0 1px 12px rgba(0,0,0,.7); }
 
-  .centre { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; padding: 24px 0; }
+  .centre { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; padding: 18px 0; }
   #locale { font-family: var(--serif); transition: opacity .9s var(--ease), transform .9s var(--ease); max-width: 26em; }
   #locale .river { display: block; font-size: clamp(1.25rem, 4.4vw, 2.1rem); font-style: italic; color: #f3ead2;
     text-shadow: 0 2px 30px rgba(0,0,0,.8); }
@@ -74,6 +74,37 @@
   .btn-ghost:hover { background: rgba(255,255,255,.14); }
   .btn-ghost[hidden] { display: none; }
   #status { font-size: .85rem; color: var(--muted); min-height: 1.3em; margin: 4px 0 0; text-shadow: 0 1px 10px rgba(0,0,0,.8); }
+
+  /* Main-screen time slider and control strip */
+  .timecard { width: min(560px, 100%); padding: 16px 18px 14px; border-radius: 20px; text-align: left; background: var(--glass);
+    border: 1px solid var(--line); backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
+    box-shadow: 0 18px 50px rgba(0,0,0,.35); }
+  .timecard .name { font-family: var(--serif); font-size: 1.25rem; font-weight: 500; }
+  .timecard output { font-variant-numeric: tabular-nums; color: var(--amber-2); font-size: 1.05rem; font-weight: 600; }
+  .timerow { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
+  .slidecol { flex: 1; min-width: 0; }
+  .timerow input[type=range] { width: 100%; height: 48px; }
+  @media (max-width: 520px) { .timerow { flex-wrap: wrap; } .slidecol { flex-basis: 100%; } .timerow .btn-main { width: 100%; } }
+  .timerow input[type=range]::-webkit-slider-thumb { width: 34px; height: 34px; margin-top: -14px; }
+  .timerow input[type=range]::-moz-range-thumb { width: 28px; height: 28px; }
+  .timerow .btn-main { min-width: 116px; min-height: 56px; padding: 0 22px; }
+  .ticks { position: relative; height: 1.1em; margin: 0 17px; font-size: .72rem; color: var(--muted); letter-spacing: .04em; }
+  .ticks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+  .ticks span:first-child { transform: translateX(-30%); } .ticks span:last-child { transform: translateX(-70%); }
+  .timecard .desc { margin: 8px 0 0; color: var(--muted); font-size: .84rem; line-height: 1.4; }
+  .strip-wrap { position: relative; width: 100%; max-width: 1040px; margin: 0 auto 6px; }
+  .strip-head { display: flex; justify-content: space-between; align-items: baseline; padding: 0 4px 8px; }
+  .strip-head .eyebrow { margin: 0; }
+  .swipe { font-size: .78rem; color: var(--muted); }
+  .strip { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 2px 2px 10px; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .strip::-webkit-scrollbar { display: none; }
+  .strip .ctl { flex: 0 0 min(86%, 330px); scroll-snap-align: center; margin: 0; background: var(--glass); border: 1px solid var(--line);
+    backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%); }
+  .dots { display: flex; justify-content: center; gap: 6px; }
+  .dots button { width: 7px; height: 7px; padding: 0; border-radius: 6px; background: rgba(255,255,255,.25); transition: width .35s var(--ease), background .35s; }
+  .dots button.on { width: 20px; background: var(--amber); }
+  @media (min-width: 1100px) { .swipe { visibility: hidden; } }
 
   /* Drawer */
   .drawer { position: fixed; left: 50%; bottom: 0; z-index: 30; width: min(780px, 100%); max-height: 84dvh;
@@ -173,18 +204,34 @@
     <div id="phase" class="idle">Calm</div>
     <div id="locale" class="idle"><span class="river">Waiting by the river</span><span class="spot">Every storm picks a river and a place to shelter</span></div>
     <div id="surpriseNote" aria-live="polite"></div>
+    <div class="timecard">
+      <div class="ctl-top"><label class="name" for="timeSlider">How long a storm?</label><output id="timeOut" for="timeSlider">Random</output></div>
+      <div class="timerow">
+        <div class="slidecol">
+          <input type="range" id="timeSlider" min="0" max="50" step="1" value="0" aria-describedby="timeHint">
+          <div class="ticks" aria-hidden="true"><span style="left:0%">Random</span><span style="left:20%">10 min</span><span style="left:50%">25 min</span><span style="left:100%">50 min</span></div>
+        </div>
+        <button id="btnStorm" class="btn-main" type="button">Start</button>
+      </div>
+      <p class="desc" id="timeHint">Slide to a length and the storm begins, or tap Start. Leave it on Random for a surprise length between 8 and 50 minutes.</p>
+    </div>
     <div class="play">
-      <button id="btnStorm" class="btn-main" type="button">Start a storm</button>
-      <button id="btnStop" class="btn-ghost" type="button" hidden>Stop</button>
+      <button id="btnStop" class="btn-ghost" type="button" hidden>Stop the storm</button>
     </div>
     <p id="status">Best with headphones or good stereo speakers.</p>
   </section>
+
+  <section class="strip-wrap" aria-label="Shape your storm">
+    <div class="strip-head"><span class="eyebrow">Shape your storm</span><span class="swipe">swipe for more ›</span></div>
+    <div class="strip" id="mainControls"></div>
+    <div class="dots" id="dots"></div>
+  </section>
 </main>
 
-<aside class="drawer" id="drawer" aria-label="Fine-tune the storm">
+<aside class="drawer" id="drawer" aria-label="Advanced settings">
   <button class="handle" id="handle" type="button" aria-expanded="false" aria-controls="drawerBody">
     <span class="grip" aria-hidden="true"></span>
-    <span><strong>Fine-tune the storm</strong><small>Strength, thunder, lightning, rain, wildlife and more</small></span>
+    <span><strong>Advanced settings</strong><small>River and spot, surprise mode, drift, sound check, credits</small></span>
     <span class="chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 9l5-5 5 5" fill="none" stroke="#f6d28e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </button>
   <div class="drawer-body" id="drawerBody">
@@ -229,7 +276,7 @@
 <div id="notice" hidden role="dialog" aria-modal="true" aria-labelledby="noticeTitle">
   <div class="card">
     <h2 id="noticeTitle">Before the storm</h2>
-    <p id="noticeText">This page shows <strong>flashing lightning</strong> that lights up the whole screen. If flashing lights affect you, turn flashes off. You can change this any time under Fine-tune › Lightning.</p>
+    <p id="noticeText">This page shows <strong>flashing lightning</strong> that lights up the whole screen. If flashing lights affect you, turn flashes off. You can change this any time on the Lightning flashes card.</p>
     <div class="row">
       <button id="noticeOn" class="btn-main" type="button" style="min-width:0;flex:1">Keep flashes on</button>
       <button id="noticeOff" class="btn-ghost" type="button" style="flex:1">Turn flashes off</button>
@@ -282,66 +329,59 @@
   // ---------- Settings ----------
   const STORE_KEY = "thunderPlayer.settings.v1";
   const NOTICE_KEY = "thunderPlayer.flashNotice.v1";
+  // Drawer ("Advanced settings") sections. The everyday controls live on the main screen.
   const SECTIONS = [
-    { id: "storm",     title: "Storm",               blurb: "How big, how often and how long", open: true },
-    { id: "lightning", title: "Lightning",           blurb: "Flashes across the sky and screen" },
-    { id: "rain",      title: "Rain",                blurb: "The rain that drifts in and passes over" },
-    { id: "ambience",  title: "Ambience & wildlife", blurb: "Which river, and where you shelter" },
-    { id: "advanced",  title: "Advanced",            blurb: "Surprises, volume, drift, testing" }
+    { id: "where",    title: "River & listening spot", blurb: "Random unless you pick one", open: true },
+    { id: "surprise", title: "Surprise mode",          blurb: "Let the storm break its own rules" },
+    { id: "playback", title: "Playback & testing",     blurb: "Quick test, drift, volume, sound check" }
   ];
   const pct = (v) => Math.round(v) + "%";
   const SCHEMA = [
-    { sec: "storm", key: "intensity", type: "range", label: "Storm strength", min: 50, max: 150, step: 5, def: 100, fmt: pct,
+    { sec: "main", key: "intensity", type: "range", label: "Storm strength", min: 50, max: 150, step: 5, def: 100, fmt: pct,
       desc: "How fierce the peak gets: louder, closer cracks in tighter bursts, and brighter flashes. Applies from the next storm." },
-    { sec: "storm", key: "thunderFreq", type: "range", label: "Thunder frequency", min: 50, max: 200, step: 10, def: 100, fmt: pct,
+    { sec: "main", key: "thunderFreq", type: "range", label: "Thunder frequency", min: 50, max: 200, step: 10, def: 100, fmt: pct,
       desc: "How often thunder rolls and cracks. Higher means more claps, closer together. Applies from the next storm." },
-    { sec: "storm", key: "thunderVol", type: "range", label: "Thunder volume", min: 0, max: 150, step: 5, def: 100, fmt: pct,
+    { sec: "main", key: "thunderVol", type: "range", label: "Thunder volume", min: 0, max: 150, step: 5, def: 100, fmt: pct,
       desc: "Loudness of every rumble and crack. Changes straight away." },
-    { sec: "storm", key: "lengthMode", type: "select", label: "Storm length", def: "random",
-      options: [["random", "Random, 8 to 50 minutes"], ["fixed", "Choose a length"]],
-      desc: "Real storms vary. Leave it on Random for a different length every time." },
-    { sec: "storm", key: "lengthMin", type: "range", label: "Chosen length", min: 1, max: 50, step: 1, def: 20,
-      fmt: (v) => v + (v == 1 ? " minute" : " minutes"), showIf: (S) => S.lengthMode === "fixed",
-      desc: "Storms of 8 minutes or more bring the full rain that builds from far away. Shorter ones are quick showers." },
-    { sec: "storm", key: "quick", type: "toggle", label: "Quick test storm (10× faster)", def: false,
+    { sec: "playback", key: "quick", type: "toggle", label: "Quick test storm (10× faster)", def: false,
       desc: "Plays the whole storm ten times faster, so 30 minutes takes 3. Good for a preview." },
 
-    { sec: "lightning", key: "flashes", type: "toggle", label: "Lightning flashes", def: !REDUCED,
+    { sec: "main", key: "flashes", type: "toggle", label: "Lightning flashes", def: !REDUCED,
       desc: "Bolts across the sky and a flash over the whole screen, in time with the thunder. Turning this off stops every flash, including surprises.",
       warn: "Photosensitivity warning: flashes can be bright and sudden. Turn them off if flashing lights affect you." + (REDUCED ? " They start off here because your device asks for reduced motion." : "") },
-    { sec: "lightning", key: "flashRate", type: "range", label: "Flash rate", min: 25, max: 200, step: 5, def: 100, fmt: pct, dimIf: (S) => !S.flashes,
+    { sec: "main", key: "flashRate", type: "range", label: "Flash rate", min: 25, max: 200, step: 5, def: 100, fmt: pct, dimIf: (S) => !S.flashes,
       desc: "Under 100%, some thunder comes without a visible flash. Over 100%, silent far-off flickers are added." },
-    { sec: "lightning", key: "brightness", type: "range", label: "Flash brightness", min: 10, max: 100, step: 5, def: 70, fmt: pct, dimIf: (S) => !S.flashes,
+    { sec: "main", key: "brightness", type: "range", label: "Flash brightness", min: 10, max: 100, step: 5, def: 70, fmt: pct, dimIf: (S) => !S.flashes,
       desc: "How bright each flash gets. Turn it down for a dark room." },
 
-    { sec: "rain", key: "rainVol", type: "range", label: "Rain volume", min: 0, max: 150, step: 5, def: 100, fmt: pct,
+    { sec: "main", key: "rainVol", type: "range", label: "Rain volume", min: 0, max: 150, step: 5, def: 100, fmt: pct,
       desc: "The rain that starts far away, closes in and passes over (storms of 8 minutes or more). Changes straight away." },
-    { sec: "rain", key: "rainVisual", type: "toggle", label: "Show falling rain", def: true,
+    { sec: "playback", key: "rainVisual", type: "toggle", label: "Show falling rain", def: true,
       desc: "Draws rain and ripples on the river. Turn it off to save battery." },
 
-    { sec: "ambience", key: "wildVol", type: "range", label: "Wildlife volume", min: 0, max: 150, step: 5, def: 100, fmt: pct,
+    { sec: "main", key: "wildVol", type: "range", label: "Wildlife volume", min: 0, max: 150, step: 5, def: 100, fmt: pct,
       desc: "Frogs, birds and insects by the river. They fall silent at the peak and return as the storm passes. Changes straight away." },
-    { sec: "ambience", key: "river", type: "select", label: "River", def: "random",
+    { sec: "where", key: "river", type: "select", label: "River", def: "random",
       options: [["random", "Random: a different river each storm"]].concat(RIVERS.map((r) => [r.id, r.name])),
       desc: "The home river you're listening beside, each with its own wildlife. Applies from the next storm." },
-    { sec: "ambience", key: "position", type: "select", label: "Listening spot", def: "random",
+    { sec: "where", key: "position", type: "select", label: "Listening spot", def: "random",
       options: [["random", "Random: a different spot each storm"]].concat(POSITIONS.map((p) => [p.id, p.name.charAt(0).toUpperCase() + p.name.slice(1)])),
       desc: "Where you shelter. Tents and roofs change the rain and soften the thunder. Applies from the next storm." },
 
-    { sec: "advanced", key: "surprise", type: "toggle", label: "Surprise mode", def: false,
+    { sec: "surprise", key: "surprise", type: "toggle", label: "Surprise mode", def: false,
       desc: "The storm sometimes breaks its own rules: a stray strike, a sudden hush or a burst of heavier rain. Off means every storm follows the rules." },
-    { sec: "advanced", key: "surpriseRate", type: "select", label: "How often surprises happen", def: "occasional", dimIf: (S) => !S.surprise,
+    { sec: "surprise", key: "surpriseRate", type: "select", label: "How often surprises happen", def: "occasional", dimIf: (S) => !S.surprise,
       options: [["rare", "Rare: about once every 10 minutes"], ["occasional", "Occasional: about every 4 minutes"], ["frequent", "Frequent: about every 90 seconds"]],
       desc: "Measured in storm time, so a quick test storm gets its share too." },
-    { sec: "advanced", key: "masterVol", type: "range", label: "Master volume", min: 0, max: 100, step: 5, def: 90, fmt: pct,
+    { sec: "playback", key: "masterVol", type: "range", label: "Master volume", min: 0, max: 100, step: 5, def: 90, fmt: pct,
       desc: "Overall loudness of the whole page." },
-    { sec: "advanced", key: "drift", type: "select", label: "Storm drift", def: "random",
+    { sec: "playback", key: "drift", type: "select", label: "Storm drift", def: "random",
       options: [["random", "Random"], ["LtoR", "Left to right"], ["RtoL", "Right to left"]],
       desc: "Which way the front crosses your speakers. Applies from the next storm." },
-    { sec: "advanced", key: "autoRepeat", type: "toggle", label: "Keep storms coming", def: false,
+    { sec: "playback", key: "autoRepeat", type: "toggle", label: "Keep storms coming", def: false,
       desc: "When a storm passes, a new one rolls in after a short calm." }
   ];
-  const DEFAULTS = {};
+  const DEFAULTS = { lengthMode: "random", lengthMin: 20 };   // set by the main-screen time slider
   SCHEMA.forEach((c) => { DEFAULTS[c.key] = c.def; });
   let S = Object.assign({}, DEFAULTS);
   try {
@@ -354,11 +394,32 @@
         else if (c.type === "toggle" && typeof v === "boolean") S[c.key] = v;
         else if (c.type === "select" && c.options.some((o) => o[0] === v)) S[c.key] = v;
       });
+      if (saved.lengthMode === "random" || saved.lengthMode === "fixed") S.lengthMode = saved.lengthMode;
+      if (typeof saved.lengthMin === "number" && saved.lengthMin >= 1 && saved.lengthMin <= 50) S.lengthMin = Math.round(saved.lengthMin);
     }
   } catch (e) {}
   function saveSettings() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
 
   function buildControls() {
+    const strip = $("mainControls");
+    strip.innerHTML = "";
+    SCHEMA.filter((c) => c.sec === "main").forEach((c) => strip.appendChild(buildControl(c)));
+    const dots = $("dots");
+    dots.innerHTML = "";
+    Array.prototype.forEach.call(strip.children, function (card, i) {
+      const b = document.createElement("button");
+      b.type = "button"; b.setAttribute("aria-label", "Show " + card.querySelector(".name").textContent);
+      b.addEventListener("click", function () { strip.scrollTo({ left: card.offsetLeft - (strip.clientWidth - card.offsetWidth) / 2, behavior: REDUCED ? "auto" : "smooth" }); });
+      dots.appendChild(b);
+    });
+    function syncDots() {
+      const mid = strip.scrollLeft + strip.clientWidth / 2;
+      let best = 0, bd = 1e9;
+      Array.prototype.forEach.call(strip.children, function (card, i) { const d = Math.abs(card.offsetLeft + card.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = i; } });
+      Array.prototype.forEach.call(dots.children, function (b, i) { b.classList.toggle("on", i === best); });
+    }
+    strip.addEventListener("scroll", function () { requestAnimationFrame(syncDots); }, { passive: true });
+    setTimeout(syncDots, 50);
     const root = $("controls");
     root.innerHTML = "";
     SECTIONS.forEach((sec) => {
@@ -370,7 +431,7 @@
       d.querySelector("summary span").textContent = sec.blurb;
       const body = d.querySelector(".sec-body");
       SCHEMA.filter((c) => c.sec === sec.id).forEach((c) => body.appendChild(buildControl(c)));
-      if (sec.id === "advanced") body.appendChild(buildAdvancedExtras());
+      if (sec.id === "playback") body.appendChild(buildAdvancedExtras());
       root.appendChild(d);
     });
     refreshControls();
@@ -428,6 +489,15 @@
       w.hidden = c.showIf ? !c.showIf(S) : false;
       w.classList.toggle("dim", c.dimIf ? !!c.dimIf(S) : false);
     });
+    refreshTime();
+  }
+  function timeLabel() { return S.lengthMode === "fixed" ? S.lengthMin + (S.lengthMin === 1 ? " minute" : " minutes") : "Random, 8 to 50 min"; }
+  function refreshTime() {
+    const t = $("timeSlider");
+    t.value = S.lengthMode === "fixed" ? S.lengthMin : 0;
+    t.style.setProperty("--p", (t.value / 50 * 100) + "%");
+    t.setAttribute("aria-valuetext", timeLabel());
+    $("timeOut").textContent = timeLabel();
   }
   function setSetting(key, value) {
     S[key] = value;
@@ -988,7 +1058,7 @@
       }
       const btn = $("btnStorm");
       btn.disabled = true;
-      btn.textContent = "Gathering clouds…";
+      btn.textContent = "Loading…";
       let done = 0, ok = 0, fail = 0;
       statusEl.textContent = "Loading sounds 0 of " + CLIPS.length + "…";
       await Promise.all(CLIPS.map(async function (clip) {
@@ -1044,7 +1114,7 @@
     updateButtons(false);
   }
   function updateButtons(playing) {
-    $("btnStorm").textContent = playing ? "New storm" : "Start a storm";
+    $("btnStorm").textContent = playing ? "New storm" : "Start";
     $("btnStop").hidden = !playing;
   }
 
@@ -1626,6 +1696,27 @@
 
   // ---------- Wiring ----------
   buildControls();
+  // Main-screen time slider: 0 = Random (8-50 min). Letting go of it starts a storm if none is playing.
+  $("timeSlider").addEventListener("input", function () {
+    const v = parseInt(this.value, 10);
+    if (v === 0) S.lengthMode = "random"; else { S.lengthMode = "fixed"; S.lengthMin = v; }
+    saveSettings(); refreshTime();
+  });
+  $("timeSlider").addEventListener("change", function () {
+    if (storm) { statusEl.textContent = "The next storm will be " + (S.lengthMode === "fixed" ? S.lengthMin + " minutes long" : "a random length") + ". Tap New storm to start it now."; return; }
+    startStorm().catch(function (err) { log("Storm error: " + (err && err.message ? err.message : err)); });
+  });
+  // iOS/Safari only allow audio after a tap, so wake the audio engine on the very first touch anywhere.
+  function primeAudio() {
+    ["pointerup", "touchend", "click", "keydown"].forEach(function (ev) { document.removeEventListener(ev, primeAudio, true); });
+    try {
+      ensureContext();
+      if (ctx.state !== "running") ctx.resume();
+      const b = ctx.createBuffer(1, 1, ctx.sampleRate), s0 = ctx.createBufferSource();
+      s0.buffer = b; s0.connect(ctx.destination); s0.start(0);
+    } catch (e) {}
+  }
+  ["pointerup", "touchend", "click", "keydown"].forEach(function (ev) { document.addEventListener(ev, primeAudio, true); });
   $("btnStorm").addEventListener("click", function () {
     startStorm().catch(function (err) { log("Storm error: " + (err && err.message ? err.message : err)); statusEl.textContent = "Something went wrong starting the storm."; });
   });
@@ -1658,7 +1749,7 @@
     const n = $("notice");
     if (!S.flashes) {
       $("noticeText").innerHTML = "This page can show <strong>flashing lightning</strong> across the whole screen. Flashes are off" +
-        (REDUCED ? " because your device asks for reduced motion" : "") + ". You can turn them on here or any time under Fine-tune › Lightning.";
+        (REDUCED ? " because your device asks for reduced motion" : "") + ". You can turn them on here or any time on the Lightning flashes card.";
       $("noticeOn").textContent = "Turn flashes on"; $("noticeOff").textContent = "Keep flashes off";
     }
     n.hidden = false;
