@@ -411,7 +411,7 @@
       desc: "How bright each flash gets. Turn it down for a dark room." },
 
     { sec: "main", key: "rainVol", type: "range", label: "Rain volume", min: 0, max: 150, step: 5, def: 100, fmt: pct,
-      desc: "The rain that starts far away, closes in and passes over (storms of 8 minutes or more). Changes straight away." },
+      desc: "Rain arrives with the first thunder, then comes and goes: light patter, heavy bursts, lulls and dry spells. Changes straight away." },
     { sec: "playback", key: "rainVisual", type: "toggle", label: "Show falling rain", def: true,
       desc: "Draws rain and ripples on the river. Turn it off to save battery." },
 
@@ -896,16 +896,16 @@
         gap = rand(7, 16) / freq;
         intensity = lerp(0.55, 0.2, recProg) * k;
       }
-      let attack = phase === "peak" ? 0.02 : rand(2, 8);
+      // 20 Nov rain rule: no rain lead-in or pre-swell. Rumbles get a short, click-free onset; cracks stay sharp.
+      let attack = phase === "peak" ? 0.02 : rand(0.3, 0.8);
       if (long && phase !== "peak") {
-        // Long storms: clips follow the rain bed's distance so nothing pops in loud early.
+        // Long storms: distant thunder follows the storm front's distance so nothing pops in loud early.
         const env = rainEnvelope(t, envPlan);
         gain = gain * Math.pow(env.gain, 0.6);
         cutoff = clamp(env.cutoff * rand(0.8, 1.25), 200, 12000);
         rate = rate + (1 - rate) * env.s;
         pan = clamp(env.pan + rand(-0.12, 0.12), -1, 1);
         intensity = intensity * lerp(0.4, 1, env.s);
-        attack = Math.max(0.6, rand(6, 20) / speed);
       }
       // Tent and roof positions slightly muffle thunder (lowpass + a little less gain).
       cutoff = Math.min(cutoff, position.muffle);
@@ -913,8 +913,6 @@
       events.push({
         t: t, phase: phase, clip: clipMeta, rate: rate, cutoff: cutoff,
         gain: gain, pan: pan, flashDelay: flashDelay, intensity: intensity,
-        // Rain onset: rain-and-rumble clips swell in gradually (2-8 s, double the earlier 1-4 s); close cracks stay sharp.
-        // Long storms (>= 8 real min) use 6-20 s (divided by the quick-test speed-up).
         attack: attack
       });
       lastId = clipMeta.id;
@@ -925,79 +923,123 @@
       river: river, position: position, k: k };
   }
 
-  // ---------- Continuous rain bed (long storms only) ----------
-  function curveFor(st, fromT, toT, key) {
-    const len = Math.max(2, Math.ceil(toT - fromT) + 1);   // ~1 s resolution
-    const arr = new Float32Array(len);
-    for (let i = 0; i < len; i++) {
-      const t = fromT + (toT - fromT) * (i / (len - 1));
-      arr[i] = rainEnvelope(t, st)[key];
+  // ---------- Rain (20 Nov 2026 rule) ----------
+  // No lead-in: the listening-spot rain bed stays silent until the first thunder actually sounds.
+  // After that it is a varied mix of light patter, heavy bursts, lulls and near-dry gaps with random
+  // timing and strength, heavier and more frequent near the peak and sparser as the storm moves away.
+  // rainEnvelope() above is now only the storm-front position (approach, peak, recession).
+  const RAIN_KINDS = {
+    gap:    { label: "near-dry gap", lo: 0.0,  hi: 0.025, dLo: 4, dHi: 14, rLo: 1.5, rHi: 4 },
+    lull:   { label: "lull",         lo: 0.06, hi: 0.16,  dLo: 6, dHi: 16, rLo: 1.5, rHi: 4 },
+    patter: { label: "light patter", lo: 0.18, hi: 0.4,   dLo: 8, dHi: 24, rLo: 1.5, rHi: 3.5 },
+    burst:  { label: "heavy burst",  lo: 0.55, hi: 1.0,   dLo: 5, dHi: 18, rLo: 0.8, rHi: 2.5 }
+  };
+  function planRain(st) {
+    const sp = st.speed || 1, D = st.durationSec;
+    let first = Infinity;
+    st.events.forEach(function (ev) { first = Math.min(first, ev.t + ev.flashDelay); });
+    if (!isFinite(first)) first = st.approachEnd;
+    const segs = [];
+    let t = first, prev = null;
+    while (t < D - 0.5) {
+      const s = rainEnvelope(t, st).s;
+      const phase = t < st.approachEnd ? "approach" : t < st.peakEnd ? "peak" : "recession";
+      let w;
+      if (phase === "peak") w = { gap: 0.06, lull: 0.14, patter: 0.3, burst: 0.5 };
+      else if (phase === "approach") w = { gap: 0.25 - 0.15 * s, lull: 0.3, patter: 0.35, burst: 0.1 + 0.3 * s };
+      else w = { gap: 0.2 + 0.3 * (1 - s), lull: 0.3, patter: 0.3, burst: 0.03 + 0.2 * s };
+      if (!segs.length) { w.gap = 0; w.burst = 0; }          // rain arrives with the first thunder as a patter or lull
+      if (prev === "gap") w.gap = 0;                          // never two dry gaps in a row
+      const tot = w.gap + w.lull + w.patter + w.burst;
+      let r = Math.random() * tot, kind = "patter";
+      for (const k of ["gap", "lull", "patter", "burst"]) { if (r < w[k]) { kind = k; break; } r -= w[k]; }
+      const K = RAIN_KINDS[kind];
+      let level = rand(K.lo, K.hi);
+      if (kind !== "gap") level *= lerp(0.55, 1, s);         // loosely follows the front
+      const dur = Math.max(1.2, rand(K.dLo, K.dHi * (phase === "peak" && kind === "burst" ? 1.25 : 1)) / sp);
+      const ramp = Math.min(dur * 0.6, Math.max(0.25, rand(K.rLo, K.rHi) / sp));
+      segs.push({ t: t, dur: Math.min(dur, D - t), kind: kind, level: level, ramp: ramp,
+        cutoff: clamp(lerp(2200, 11000, Math.min(1, level)) * rand(0.8, 1.15), 900, 14000),
+        pan: rand(-0.45, 0.45), rate: rand(0.95, 1.05) });
+      prev = kind;
+      t += dur;
     }
-    return arr;
+    return { first: first, segs: segs };
+  }
+  function rainSegAt(st, el) {
+    const plan = st.rainPlan;
+    if (!plan || el < plan.first) return null;
+    let cur = null;
+    for (let i = 0; i < plan.segs.length; i++) { if (plan.segs[i].t <= el) cur = plan.segs[i]; else break; }
+    return cur;
   }
 
   function startRainBed(st, t0) {
     stopRainBed(0.05);
-    const D = st.durationSec, A = st.approachEnd, P = st.peakEnd;
-    const bus = ctx.createGain();
+    const D = st.durationSec;
+    const plan = planRain(st);
+    st.rainPlan = plan;
     const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass"; lp.Q.value = 0.5;
+    lp.type = "lowpass"; lp.Q.value = 0.5; lp.frequency.value = 6000;
     const pan = ctx.createStereoPanner();
     const env = ctx.createGain();
     const out = ctx.createGain();
     out.gain.value = RAIN_BED_LEVEL * rainMul();
-    bus.connect(lp); lp.connect(pan); pan.connect(env); env.connect(out); out.connect(master);
-    const e0 = rainEnvelope(0, st);
-    env.gain.value = e0.gain; lp.frequency.value = e0.cutoff; pan.pan.value = e0.pan;
-    const s0 = t0 + 0.05;
-    // Approach: far -> near over the whole approach phase (minutes for real long storms)
-    env.gain.setValueCurveAtTime(curveFor(st, 0.05, A, "gain"), s0, A - 0.05);
-    lp.frequency.setValueCurveAtTime(curveFor(st, 0.05, A, "cutoff"), s0, A - 0.05);
-    pan.pan.setValueCurveAtTime(curveFor(st, 0.05, A, "pan"), s0, A - 0.05);
-    // Peak: holds the last approach value (full, open, centred). Recession: reverse to silence.
-    env.gain.setValueCurveAtTime(curveFor(st, P, D, "gain"), t0 + P, D - P);
-    lp.frequency.setValueCurveAtTime(curveFor(st, P, D, "cutoff"), t0 + P, D - P);
-    pan.pan.setValueCurveAtTime(curveFor(st, P, D, "pan"), t0 + P, D - P);
-    env.gain.setValueAtTime(0, t0 + D + 0.05);
-
-    // Recorded rain loop only — no synthesised noise, no rumble-chunk bed.
+    lp.connect(pan); pan.connect(env); env.connect(out); out.connect(master);
+    env.gain.value = 0;
+    env.gain.setValueAtTime(0, ctx.currentTime);
+    const T1 = t0 + plan.first;
+    env.gain.setValueAtTime(0, T1);
+    // Each segment holds the previous value, then glides (linear ramps: smooth, no clicks) to its own level,
+    // tone, position and speed.
+    let last = { level: 0, cutoff: 6000, pan: 0, rate: 1 }, lastEnd = T1;
     const rainId = (st.position && st.position.rain) || "rain_bed";
     const rainBuf = buffers[rainId] || buffers["rain_bed"];
+    const src = rainBuf ? ctx.createBufferSource() : null;
+    plan.segs.forEach(function (sg, i) {
+      const T = Math.max(t0 + sg.t, lastEnd + 0.001), E = T + sg.ramp;
+      if (i) {
+        env.gain.setValueAtTime(last.level, T); lp.frequency.setValueAtTime(last.cutoff, T);
+        pan.pan.setValueAtTime(last.pan, T); if (src) src.playbackRate.setValueAtTime(last.rate, T);
+      } else {
+        lp.frequency.setValueAtTime(sg.cutoff, T); pan.pan.setValueAtTime(sg.pan, T); if (src) src.playbackRate.setValueAtTime(sg.rate, T);
+      }
+      env.gain.linearRampToValueAtTime(sg.level, E);
+      lp.frequency.linearRampToValueAtTime(sg.cutoff, E);
+      pan.pan.linearRampToValueAtTime(sg.pan, E);
+      if (src) src.playbackRate.linearRampToValueAtTime(sg.rate, E);
+      last = sg; lastEnd = E;
+    });
+    const fadeStart = Math.max(lastEnd + 0.001, t0 + D - Math.max(0.5, rand(3, 6) / (st.speed || 1)));
+    env.gain.setValueAtTime(last.level, fadeStart);
+    env.gain.linearRampToValueAtTime(0, Math.max(fadeStart + 0.3, t0 + D));
+    env.gain.setValueAtTime(0, Math.max(fadeStart + 0.35, t0 + D + 0.05));
     const sources = [];
-    if (rainBuf) {
-      const src = ctx.createBufferSource();
-      src.buffer = rainBuf;
-      src.loop = true;
-      src.playbackRate.value = e0.rate;
-      src.playbackRate.setValueCurveAtTime(curveFor(st, 0.05, A, "rate"), s0, A - 0.05);
-      src.playbackRate.setValueCurveAtTime(curveFor(st, P, D, "rate"), t0 + P, D - P);
-      src.connect(bus);
-      src.start(s0);
+    if (src) {
+      src.buffer = rainBuf; src.loop = true;
+      src.connect(lp);
+      src.start(T1, rand(0, Math.max(0.1, rainBuf.duration - 1)));
       src.stop(t0 + D + 0.5);
       sources.push(src);
     }
-
-    const bed = { t0: t0, st: st, bus: bus, lp: lp, pan: pan, env: env, out: out,
-      sources: sources, lastBucket: -1, timer: null };
+    const bed = { t0: t0, st: st, lp: lp, pan: pan, env: env, out: out, sources: sources, lastSeg: null, timer: null };
     bed.timer = setInterval(function () {
       if (rainBed !== bed) return;
       const el = ctx.currentTime - t0;
-      const ev = rainEnvelope(el, st);
-      const pct = Math.round(ev.distance * 100);
-      const bucket = Math.round(pct / 5);
-      if (bucket !== bed.lastBucket && el < D) {
-        bed.lastBucket = bucket;
-        log("Rain distance " + pct + "% → " + (pct >= 67 ? "far" : pct >= 34 ? "closing" : pct > 0 ? "near" : "at the tank") +
-            "  (gain " + (20 * Math.log10(Math.max(ev.gain, 1e-6))).toFixed(1) + " dB, lp " + Math.round(ev.cutoff) +
-            " Hz, pan " + ev.pan.toFixed(2) + ")");
+      const sg = rainSegAt(st, el);
+      if (sg && sg !== bed.lastSeg && el < D) {
+        bed.lastSeg = sg;
+        log("Rain @" + fmtTime(sg.t * (st.speed || 1)) + ": " + RAIN_KINDS[sg.kind].label + " " + Math.round(sg.level * 100) + "% for " +
+            Math.round(sg.dur * (st.speed || 1)) + " s (glide " + sg.ramp.toFixed(1) + " s, pan " + sg.pan.toFixed(2) + ", lp " + Math.round(sg.cutoff) + " Hz)");
       }
       if (el > D + 1) stopRainBed(0.05);
-    }, 2000);
+    }, 500);
     rainBed = bed;
-    log("Rain bed on — " + rainId + (rainBuf ? "" : " MISSING, silent") +
-        ", starts " + Math.round(e0.distance * 100) + "% away (" +
-        (20 * Math.log10(e0.gain)).toFixed(0) + " dB, lp " + Math.round(e0.cutoff) + " Hz, pan " + e0.pan.toFixed(2) +
-        "), reaches the tank at " + fmtTime(A) + ", recedes from " + fmtTime(P) + ".");
+    const counts = {};
+    plan.segs.forEach(function (sg) { counts[sg.kind] = (counts[sg.kind] || 0) + 1; });
+    log("Rain bed ready: " + rainId + (rainBuf ? "" : " MISSING, silent") + ". Silent until the first thunder at " +
+        fmtTime(plan.first * (st.speed || 1)) + ", then " + plan.segs.length + " changes (" +
+        Object.keys(counts).map(function (k) { return counts[k] + " " + RAIN_KINDS[k].label + (counts[k] > 1 ? "s" : ""); }).join(", ") + ").");
     return bed;
   }
 
@@ -1288,13 +1330,13 @@
     storm.t0 = t0;
     const gen = ++stormGen;
     storm.gen = gen;
-    if (storm.long) startRainBed(storm, t0);
+    startRainBed(storm, t0);
     if (!storm.noWildlife) startWildlifeBed(storm, t0);
     else log("Wildlife sounds are off for this storm.");
     setLocale(storm.river.name, "heard " + storm.position.name, true);
     updateButtons(true);
     requestWake();
-    statusEl.textContent = "A " + minutes + "-minute storm" + (speed !== 1 ? ", played 10× faster" : "") + (storm.long ? ". Listen for the rain far off." : ", a quick shower.");
+    statusEl.textContent = "A " + minutes + "-minute storm" + (speed !== 1 ? ", played 10× faster" : "") + ". The rain comes with the first thunder.";
     log("Storm start: " + minutes + " min" + (speed !== 1 ? " (playing in " + fmtTime(storm.durationSec) + ")" : "") +
         ", " + storm.river.name + " · " + storm.position.name + ", strength " + S.intensity + "%, thunder " + S.thunderFreq +
         "%, drift " + (storm.direction === "LtoR" ? "left → right" : "right → left") + ", " + storm.events.length + " events" +
@@ -1375,7 +1417,9 @@
     else if (elapsed < storm.peakEnd) { cls = "near"; trend = "overhead"; }
     else { cls = "leaving"; trend = away >= 67 ? "far off, fading" : "moving away"; }
     const side = e.pan < -0.15 ? ", to your left" : e.pan > 0.15 ? ", to your right" : "";
-    const meta = (storm.long ? "Rain " + (away === 0 ? "at the river" : away + "% away" + side) : "Quick shower" + side) +
+    const sg = rainSegAt(storm, elapsed);
+    const meta = "Front " + (away === 0 ? "overhead" : away + "% away" + side) +
+      " · rain: " + (sg ? RAIN_KINDS[sg.kind].label : "none yet, it comes with the first thunder") +
       (lastStrike ? " · last strike " + lastStrike.delay.toFixed(1) + " s flash-to-thunder (≈ " + (lastStrike.delay * 0.343).toFixed(1) + " km)" : "");
     const key = cls + away + meta;
     if (key === distKey) return;
@@ -1503,7 +1547,7 @@
       if (el < storm.durationSec) {
         const e = rainEnvelope(el, storm);
         out.dark = 0.15 + 0.85 * e.s * clamp(0.75 + 0.25 * storm.k, 0.7, 1.1);
-        out.rain = (storm.long ? e.s : e.s * 0.6) * Math.min(1.3, rainMul());
+        out.rain = (rainBed ? clamp(rainBed.env.gain.value, 0, 1) : 0) * Math.min(1.3, rainMul()) * 1.15;
         out.wild = storm.noWildlife ? 0 : wildlifeEnvelope(el, storm).presence * Math.min(1, wildMul() + 0.15);
         out.wind = (storm.direction === "LtoR" ? 1 : -1) * (0.15 + 0.35 * e.s);
       }
